@@ -1,0 +1,8 @@
+{
+	SettingsRepoSvnUrl: "https://svn.dummy-url.com/settings/trunk",
+	SettingsRepoLocalPath: "D:\\settings",
+	GroupDeployablePaths: {
+		"wip" : ["Deployables\\dummy-wip\\wip.bat"],
+		"stage": ["Deployables\\dummy-stage\\stage1.bat", "Deployables\\dummy-stage\\stage2.bat", "Deployables\\dummy-stage\\stage3.bat"]
+	}
+}
