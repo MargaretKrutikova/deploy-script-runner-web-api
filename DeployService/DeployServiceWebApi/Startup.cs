@@ -1,19 +1,19 @@
-﻿using System.Text;
+﻿using System;
 using DeploymentSettings;
+using DeployServiceWebApi.Exceptions;
 using DeployServiceWebApi.Options;
 using DeployServiceWebApi.Services;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 
 namespace DeployServiceWebApi
 {
-    public class Startup
+	public class Startup
     {
 	    private readonly IHostingEnvironment _env;
 
@@ -46,47 +46,40 @@ namespace DeployServiceWebApi
 
 	        services.Configure<ConfigurationOptions>(Configuration);
 
-			services.AddScoped<IConfigurationService, ConfigurationOptionsService>();
-	        services.AddScoped<IDeploymentService, DeploymentService>();
-
-			services.AddSingleton<IDeploymentSettingsDataStore, DeploymentSettingsDataStore>();
-		}
+	        services.TryAddScoped<IDeploymentService, DeploymentService>();
+			services.TryAddSingleton<IDeploymentSettingsDataStore, DeploymentSettingsDataStore>();
+        }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
-        {
-            loggerFactory.AddConsole(Configuration.GetSection("Logging"));
-            loggerFactory.AddDebug();
+	    public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+	    {
+		    loggerFactory.AddConsole(Configuration.GetSection("Logging"));
+		    loggerFactory.AddDebug();
 
-	        if (!env.IsDevelopment())
-	        {
-		        app.UseDeveloperExceptionPage();
-	        }
-	        else
-	        {
-				// TODO: Implement exception handling middleware.
-				app.UseExceptionHandler(errorApp =>
-				{
-					errorApp.Run(async context =>
-					{
-						context.Response.StatusCode = 500; // or another Status accordingly to Exception Type
-						context.Response.ContentType = "application/json";
+		    try
+		    {
+			    if (env.IsDevelopment())
+			    {
+				    app.UseDeveloperExceptionPage();
+			    }
+			    else
+			    {
+				    app.UseExceptionHandlingMiddleware();
+			    }
 
-						var error = context.Features.Get<IExceptionHandlerFeature>();
-						if (error != null)
-						{
-							var ex = error.Error;
+			    app.UseDeploymentSettingsDataInitializer();
+			    app.UseMvc();
+		    }
+		    catch (Exception exception)
+		    {
+			    // TODO: log exception
 
-							await context.Response.WriteAsync(new 
-							{
-								Code = context.Response.StatusCode,
-								ex.Message
-							}.ToString(), Encoding.UTF8);
-						}
-					});
-				});
-			}
-            app.UseMvc();
-        }
+			    if (env.IsDevelopment()) throw;
+
+			    // app.Run terminates the pipeline.
+			    app.Run(context => throw new StartupException("An error occurred while starting the application.",
+				    exception));
+		    }
+	    }
     }
 }

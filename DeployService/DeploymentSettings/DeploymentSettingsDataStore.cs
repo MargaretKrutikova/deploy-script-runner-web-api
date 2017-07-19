@@ -1,31 +1,27 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
 using DeploymentSettings.Json;
 using DeploymentSettings.Models;
-using Newtonsoft.Json;
 
 namespace DeploymentSettings
 {
-	public interface IDeploymentSettingsDataStore
-	{
-		SettingsRepo GetRepoSettings();
-		bool TryGetDeployablesByGroup(string group, out string[] deployables);
-	}
-
 	public class DeploymentSettingsDataStore : IDeploymentSettingsDataStore
 	{
-	    private readonly GlobalDeploymentSettings _deploymentSettings;
+	    private GlobalDeploymentSettings _deploymentSettings;
 
-	    public DeploymentSettingsDataStore(IConfigurationService configurationService)
-	    {
-		    var settingsJson = JsonConvert.DeserializeObject<GlobalDeploymentSettingsJson>(
-				File.ReadAllText(configurationService.GetDeploySettingsFilePath()));
+		public void InitializeData(GlobalDeploymentSettingsJson settingsJson)
+		{
+			if (_deploymentSettings != null)
+			{
+				throw new InvalidOperationException("Data has already been initialized");
+			}
 
-		    _deploymentSettings = new GlobalDeploymentSettings(
+			_deploymentSettings = new GlobalDeploymentSettings(
 				settingsJson.SettingsRepoSvnUrl,
-			    settingsJson.SettingsRepoLocalPath,
-			    settingsJson.GroupDeployablePaths,
-			    settingsJson.ServiceDeployablePaths);
-	    }
+				settingsJson.SettingsRepoLocalPath,
+				settingsJson.GroupDeployablePaths,
+				settingsJson.ServiceDeployablePaths);
+		}
 
 	    public SettingsRepo GetRepoSettings()
 	    {
@@ -35,6 +31,11 @@ namespace DeploymentSettings
 		public bool TryGetDeployablesByGroup(string group, out string[] deployables)
 		{
 			return _deploymentSettings.GroupDeployablePaths.TryGetValue(group, out deployables);
+		}
+
+		public IEnumerable<string> GetGroups()
+		{
+			return _deploymentSettings.GroupDeployablePaths.Keys;
 		}
 	}
 }

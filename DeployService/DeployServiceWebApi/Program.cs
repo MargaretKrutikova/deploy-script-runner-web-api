@@ -13,6 +13,7 @@ namespace DeployServiceWebApi
                 .UseIISIntegration()
                 .UseStartup<Startup>()
                 .UseApplicationInsights()
+				.CaptureStartupErrors(true)
                 .Build();
 
             host.Run();
