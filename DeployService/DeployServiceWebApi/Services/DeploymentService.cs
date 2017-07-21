@@ -7,7 +7,9 @@ using System.Threading.Tasks;
 using DeploymentSettings.Models;
 using DeployServiceWebApi.Exceptions;
 using DeployServiceWebApi.Options;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Serilog.Events;
 
 namespace DeployServiceWebApi.Services
 {
@@ -18,13 +20,17 @@ namespace DeployServiceWebApi.Services
 
 	public class DeploymentService : IDeploymentService
 	{
-	    private readonly string _svnCeckoutScriptPath;
-	    private const string SvnCheckoutFlags = "--non-interactive --trust-server-cert --no-auth-cache";
+		private readonly ILogger<DeploymentService> _logger;
+		private readonly string _svnCeckoutScriptPath;
+		private const string SvnCheckoutFlags = "--non-interactive --trust-server-cert --no-auth-cache";
 
-	    public DeploymentService(IOptions<ConfigurationOptions> optionsAccessor)
-	    {
-		    _svnCeckoutScriptPath = optionsAccessor.Value.RepoUpdateScriptPath;
-	    }
+		public DeploymentService(
+			IOptions<ConfigurationOptions> optionsAccessor,
+			ILogger<DeploymentService> logger)
+		{
+			_logger = logger;
+			_svnCeckoutScriptPath = optionsAccessor.Value.RepoUpdateScriptPath;
+		}
 
 		// TODO: should return deployment result
 		public async Task RunDeployables(SettingsRepo repo, IEnumerable<string> deployables)
@@ -44,10 +50,10 @@ namespace DeployServiceWebApi.Services
 			}
 			catch (Exception ex)
 			{
-				// TODO: log the original exception
-				var deployServiceEx = ex as DeploymentException ??
-				                      new DeploymentException($"Error running deployables: {ex.Message}", ex);
-				throw deployServiceEx;
+				var errorMessage = $"Error running deployables: {ex.Message}";
+				_logger.LogError(errorMessage, ex);
+
+				throw ex as DeploymentException ?? new DeploymentException(errorMessage, ex);
 			}
 		}
 
@@ -56,51 +62,54 @@ namespace DeployServiceWebApi.Services
 			var args = $"\"{repoUrl}\" \"{localPath}\" {SvnCheckoutFlags}";
 
 			await ExecuteScript(_svnCeckoutScriptPath, args);
-	    }
+		}
 
-	    private static async Task ExecuteScript(string scriptPath, string args = "")
-	    {
-		    var proc = new Process
-		    {
-			    StartInfo =
-			    {
-				    FileName = scriptPath,
+		private async Task ExecuteScript(string scriptPath, string args = "")
+		{
+			var proc = new Process
+			{
+				StartInfo =
+				{
+					FileName = scriptPath,
 					Arguments = args,
-				    RedirectStandardOutput = true,
-				    RedirectStandardError = true
+					RedirectStandardOutput = true,
+					RedirectStandardError = true
 				}
-		    };
-		    await Task.Run(() =>
-		    {
-			    try
-			    {
+			};
+			_logger.LogInformation($"Starting script {Path.GetFileName(scriptPath)}");
 
-				    proc.Start();
+			await Task.Run(() =>
+			{
+				proc.Start();
 
-				    proc.OutputDataReceived += (sender, eventArgs) =>
-				    {
-					    string output = eventArgs.Data;
-						// TODO: log output
-					};
+				// read output and error streams async
+				proc.OutputDataReceived += (sender, eventArgs) => LogIfNotEmpty(eventArgs.Data);
+				proc.ErrorDataReceived += (sender, eventArgs) => LogIfNotEmpty(eventArgs.Data, LogEventLevel.Error);
 
-				    proc.BeginOutputReadLine();
+				proc.BeginOutputReadLine();
+				proc.BeginErrorReadLine();
 
-				    string error = proc.StandardError.ReadToEnd();
-					// TODO: log error
+				proc.WaitForExit();
 
-					proc.WaitForExit();
-
-				    if (!string.IsNullOrWhiteSpace(error))
-				    {
-					    var message = $"Error running script {scriptPath} with args {args} : {error}";
-					    throw new DeploymentException(message);
-				    }
-			    }
-			    catch (Exception ex)
-			    {
-				    throw new DeploymentException($"Error running script {scriptPath} with args {args}", ex);
+				if (proc.ExitCode != 0)
+				{
+					var message = $"Error running script {Path.GetFileName(scriptPath)}, exit code: {proc.ExitCode}";
+					throw new DeploymentException(message);
 				}
-		    });
+			});
+		}
+
+		private void LogIfNotEmpty(string logMessage, LogEventLevel level = LogEventLevel.Information)
+		{
+			if (string.IsNullOrWhiteSpace(logMessage)) return;
+
+			if (level == LogEventLevel.Error)
+			{
+				_logger.LogError(logMessage);
+				return;
+			}
+
+			_logger.LogInformation(logMessage);
 		}
 	}
 }

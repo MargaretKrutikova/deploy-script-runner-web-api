@@ -1,27 +1,23 @@
 ﻿using System;
 using System.Net;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace DeployServiceWebApi.Exceptions
 {
-	public static class ExceptionHandlingMiddlewareExtensions
-	{
-		public static IApplicationBuilder UseExceptionHandlingMiddleware(
-			this IApplicationBuilder builder)
-		{
-			return builder.UseMiddleware<ExceptionHandlingMiddleware>();
-		}
-	}
 	public class ExceptionHandlingMiddleware
 	{
 		private readonly RequestDelegate _next;
+		private readonly ILogger<ExceptionHandlingMiddleware> _logger;
 
-		public ExceptionHandlingMiddleware(RequestDelegate next)
+		public ExceptionHandlingMiddleware(
+			RequestDelegate next, 
+			ILogger<ExceptionHandlingMiddleware> logger)
 		{
 			this._next = next;
+			_logger = logger;
 		}
 
 		public async Task Invoke(HttpContext context /* other scoped dependencies */)
@@ -37,9 +33,9 @@ namespace DeployServiceWebApi.Exceptions
 			}
 		}
 
-		private static Task HandleExceptionAsync(HttpContext context, Exception exception)
+		private Task HandleExceptionAsync(HttpContext context, Exception exception)
 		{
-			// TODO: log exception?
+			_logger.LogError($"Error occured at ${context.Request.Path}", exception);
 
 			var code = HttpStatusCode.InternalServerError;
 			var errorTitle = "UnknownError";

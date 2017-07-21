@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using DeploymentSettings;
 using DeploymentSettings.Json;
+using DeployServiceWebApi.Exceptions;
 using DeployServiceWebApi.Options;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,6 +23,12 @@ namespace DeployServiceWebApi
 			    File.ReadAllText(settingsPath));
 
 		    dataStoreService.InitializeData(settingsJson);
+	    }
+
+	    public static IApplicationBuilder UseExceptionHandlingMiddleware(
+		    this IApplicationBuilder builder)
+	    {
+		    return builder.UseMiddleware<ExceptionHandlingMiddleware>();
 	    }
 	}
 }

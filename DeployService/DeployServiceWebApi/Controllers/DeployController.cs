@@ -5,6 +5,7 @@ using DeploymentSettings;
 using DeployServiceWebApi.Exceptions;
 using DeployServiceWebApi.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace DeployServiceWebApi.Controllers
 {
@@ -13,13 +14,16 @@ namespace DeployServiceWebApi.Controllers
     {
 	    private readonly IDeploymentSettingsDataStore _deploymentSettingsStore;
 	    private readonly IDeploymentService _deploymentService;
+	    private readonly ILogger<DeployController> _logger;
 
 	    public DeployController(
 		    IDeploymentSettingsDataStore deploymentSettingsStore,
-		    IDeploymentService deploymentService)
+		    IDeploymentService deploymentService,
+			ILogger<DeployController> logger)
 	    {
 		    _deploymentSettingsStore = deploymentSettingsStore;
 		    _deploymentService = deploymentService;
+		    _logger = logger;
 	    }
 
 	    [HttpGet("groups")]
@@ -31,7 +35,9 @@ namespace DeployServiceWebApi.Controllers
 		[HttpGet("deployGroup/{group}")]
 	    public async Task<IActionResult> Deploy(string group)
 	    {
-		    if (!_deploymentSettingsStore
+		    _logger.LogInformation($"Called deploy group: {group}");
+
+			if (!_deploymentSettingsStore
 					.TryGetDeployablesByGroup(group, out string[] deployables))
 		    {
 			    // error object corresponding to missing group.
@@ -48,7 +54,9 @@ namespace DeployServiceWebApi.Controllers
 		    var repoSettings = _deploymentSettingsStore.GetRepoSettings();
 		    await _deploymentService.RunDeployables(repoSettings, deployables);
 
-		    return Ok("Deployed successfully.");
+		    _logger.LogInformation($"Successfully deployed group: {group}");
+
+			return Ok("Deployed successfully.");
 	    }
     }
 }

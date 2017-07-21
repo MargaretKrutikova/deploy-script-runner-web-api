@@ -190,3 +190,5 @@ $RECYCLE.BIN/
 **/wwwroot/*
 /Code/VS/DeployService/.nuget
 /NugetBuild/bundles
+
+/logs/**

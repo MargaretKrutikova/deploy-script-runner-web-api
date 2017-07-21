@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace DeployServiceWebApi
 {
@@ -27,7 +28,11 @@ namespace DeployServiceWebApi
 
 	        _env = env;
             Configuration = builder.Build();
-        }
+
+			Log.Logger = new LoggerConfiguration()
+				.ReadFrom.Configuration(Configuration)
+		        .CreateLogger();
+		}
 
         public IConfigurationRoot Configuration { get; }
 
@@ -35,7 +40,7 @@ namespace DeployServiceWebApi
         public void ConfigureServices(IServiceCollection services)
         {
 			// Add framework services.
-			services.AddMvc(opt =>
+	        services.AddMvc(opt =>
 			{
 				if (!_env.IsProduction())
 				{
@@ -51,12 +56,18 @@ namespace DeployServiceWebApi
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-	    public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+	    public void Configure(
+			IApplicationBuilder app, 
+			IHostingEnvironment env, 
+			ILoggerFactory loggerFactory,
+			ILogger<Startup> logger)
 	    {
-		    loggerFactory.AddConsole(Configuration.GetSection("Logging"));
+		    loggerFactory.AddSerilog();
+
+			loggerFactory.AddConsole(Configuration.GetSection("Logging"));
 		    loggerFactory.AddDebug();
 
-		    try
+			try
 		    {
 			    if (env.IsDevelopment())
 			    {
@@ -72,9 +83,9 @@ namespace DeployServiceWebApi
 		    }
 		    catch (Exception exception)
 		    {
-			    // TODO: log exception
+			    logger.LogError("Startup error occured.", exception);
 
-			    if (env.IsDevelopment()) throw;
+				if (env.IsDevelopment()) throw;
 
 			    // app.Run terminates the pipeline.
 			    app.Run(context => throw new StartupException("An error occurred while starting the application.",
