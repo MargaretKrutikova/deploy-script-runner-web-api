@@ -1,4 +1,5 @@
 ﻿using System;
+using DeploymentJobs.DataAccess;
 using DeploymentSettings;
 using DeployServiceWebApi.Exceptions;
 using DeployServiceWebApi.Options;
@@ -53,7 +54,8 @@ namespace DeployServiceWebApi
 
 	        services.TryAddScoped<IDeploymentService, DeploymentService>();
 			services.TryAddSingleton<IDeploymentSettingsDataStore, DeploymentSettingsDataStore>();
-        }
+	        services.TryAddSingleton<IDeploymentJobDataAccess, DeploymentJobDataAccess>();
+		}
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
 	    public void Configure(

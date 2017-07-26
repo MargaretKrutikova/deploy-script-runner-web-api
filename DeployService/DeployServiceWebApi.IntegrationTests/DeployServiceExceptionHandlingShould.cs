@@ -26,7 +26,7 @@ namespace DeployServiceWebApi.IntegrationTests
 			var client = server.CreateClient();
 			client.BaseAddress = _baseAddress;
 
-			var response = await client.GetAsync("api/deployGroup/stage");
+			var response = await client.GetAsync("api/jobs?project=vds&group=error-test");
 			Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
 
 			var jsonResponse = JsonConvert.DeserializeObject<ErrorJsonObject>(await response.Content.ReadAsStringAsync());

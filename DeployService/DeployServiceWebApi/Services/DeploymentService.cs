@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
+using DeploymentJobs.DataAccess;
 using DeploymentSettings.Models;
 using DeployServiceWebApi.Exceptions;
 using DeployServiceWebApi.Options;
@@ -15,56 +15,91 @@ namespace DeployServiceWebApi.Services
 {
 	public interface IDeploymentService
 	{
-		Task RunDeployables(SettingsRepo repo, IEnumerable<string> deployables);
+		bool TryRunJobIfNotInProgress(
+			string project, 
+			string group, 
+			SettingsRepo repo, 
+			IEnumerable<string> deployables,
+			out DeploymentJob job);
 	}
 
 	public class DeploymentService : IDeploymentService
 	{
 		private readonly ILogger<DeploymentService> _logger;
+		private readonly IDeploymentJobDataAccess _jobsDataAccess;
 		private readonly string _svnCeckoutScriptPath;
 		private const string SvnCheckoutFlags = "--non-interactive --trust-server-cert --no-auth-cache";
 
 		public DeploymentService(
 			IOptions<ConfigurationOptions> optionsAccessor,
-			ILogger<DeploymentService> logger)
+			ILogger<DeploymentService> logger,
+			IDeploymentJobDataAccess jobsDataAccess)
 		{
 			_logger = logger;
+			_jobsDataAccess = jobsDataAccess;
 			_svnCeckoutScriptPath = optionsAccessor.Value.RepoUpdateScriptPath;
 		}
 
-		// TODO: should return deployment result
-		public async Task RunDeployables(SettingsRepo repo, IEnumerable<string> deployables)
+		public bool TryRunJobIfNotInProgress(
+			string project, 
+			string group,
+			SettingsRepo repo, 
+			IEnumerable<string> deployables,
+			out DeploymentJob job)
+		{
+			job = _jobsDataAccess.GetOrCreate(project, group);
+			if (job.Status == DeploymentJobStatus.IN_PROGRESS)
+			{
+				return false;
+			}
+
+			var jobId = job.Id;
+			Task.Run(() => RunJob(jobId, repo, deployables));
+			
+			return true;
+		}
+
+		private void RunJob(
+			string jobId, 
+			SettingsRepo repo,
+			IEnumerable<string> deployables)
 		{
 			try
 			{
 				// 1. make sure the settings repository is updated
-				await UpdateRepository(repo.RemoteUrl, repo.LocalPath);
+				_jobsDataAccess.SetInProgress(jobId, "Updating settings repository.");
+
+				UpdateRepository(repo.RemoteUrl, repo.LocalPath);
 
 				// 2. run deployables located in the settings repository
+				foreach (var deployable in deployables)
+				{
+					var path = Path.Combine(repo.LocalPath, deployable);
+					if (!File.Exists(path)) continue;
 
-				// TODO: check if deployables can be run in parallel
-				await Task.WhenAll(deployables
-					.Select(d => Path.Combine(repo.LocalPath, d))
-					.Where(File.Exists)
-					.Select(d => ExecuteScript(d)));
+					_jobsDataAccess.SetInProgress(jobId, $"Running deployable {Path.GetFileName(path)}");
+
+					ExecuteScript(path);
+				}
+
+				_jobsDataAccess.SetSuccess(jobId);
 			}
 			catch (Exception ex)
 			{
 				var errorMessage = $"Error running deployables: {ex.Message}";
-				_logger.LogError(errorMessage, ex);
 
-				throw ex as DeploymentException ?? new DeploymentException(errorMessage, ex);
+				_jobsDataAccess.SetFail(jobId, errorMessage);
+				_logger.LogError(errorMessage, ex);
 			}
 		}
 
-		private async Task UpdateRepository(string repoUrl, string localPath)
+		private void UpdateRepository(string repoUrl, string localPath)
 		{
 			var args = $"\"{repoUrl}\" \"{localPath}\" {SvnCheckoutFlags}";
-
-			await ExecuteScript(_svnCeckoutScriptPath, args);
+			ExecuteScript(_svnCeckoutScriptPath, args);
 		}
 
-		private async Task ExecuteScript(string scriptPath, string args = "")
+		private void ExecuteScript(string scriptPath, string args = "")
 		{
 			var proc = new Process
 			{
@@ -77,26 +112,23 @@ namespace DeployServiceWebApi.Services
 				}
 			};
 			_logger.LogInformation($"Starting script {Path.GetFileName(scriptPath)}");
+			
+			proc.Start();
 
-			await Task.Run(() =>
+			// read output and error streams async
+			proc.OutputDataReceived += (sender, eventArgs) => LogIfNotEmpty(eventArgs.Data);
+			proc.ErrorDataReceived += (sender, eventArgs) => LogIfNotEmpty(eventArgs.Data, LogEventLevel.Error);
+
+			proc.BeginOutputReadLine();
+			proc.BeginErrorReadLine();
+
+			proc.WaitForExit();
+
+			if (proc.ExitCode != 0)
 			{
-				proc.Start();
-
-				// read output and error streams async
-				proc.OutputDataReceived += (sender, eventArgs) => LogIfNotEmpty(eventArgs.Data);
-				proc.ErrorDataReceived += (sender, eventArgs) => LogIfNotEmpty(eventArgs.Data, LogEventLevel.Error);
-
-				proc.BeginOutputReadLine();
-				proc.BeginErrorReadLine();
-
-				proc.WaitForExit();
-
-				if (proc.ExitCode != 0)
-				{
-					var message = $"Error running script {Path.GetFileName(scriptPath)}, exit code: {proc.ExitCode}";
-					throw new DeploymentException(message);
-				}
-			});
+				var message = $"Error running script {Path.GetFileName(scriptPath)}, exit code: {proc.ExitCode}";
+				throw new DeploymentException(message);
+			}
 		}
 
 		private void LogIfNotEmpty(string logMessage, LogEventLevel level = LogEventLevel.Information)

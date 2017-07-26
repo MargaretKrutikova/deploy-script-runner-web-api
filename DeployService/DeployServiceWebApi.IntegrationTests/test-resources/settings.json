@@ -1,8 +1,8 @@
 ﻿{
   "SettingsRepoSvnUrl": "http://svn.test-url.com/settings",
-  "SettingsRepoLocalPath": "D:\\Root\\SETTINGS",
+  "SettingsRepoLocalPath": "deployables",
   "GroupDeployablePaths": {
-    "wip": [ "Deployables\\deploy-service-test\\wip.bat" ],
-    "stage": [ "Deployables\\deploy-service-test\\stage1.bat", "Deployables\\deploy-service-test\\stage2.bat", "Deployables\\deploy-service-test\\stage3.bat" ]
+    "error-test": [ "deployables\\error-deployable.bat" ],
+    "wip": [ "deployables\\wip-test.bat" ]
   }
 }
