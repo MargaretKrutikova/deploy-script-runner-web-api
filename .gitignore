@@ -1,3 +1,7 @@
+# vs code files
+launch.json
+tasks.json
+
 # User-specific files
 *.suo
 *.user
@@ -191,4 +195,4 @@ $RECYCLE.BIN/
 /Code/VS/DeployService/.nuget
 /NugetBuild/bundles
 
-/logs/**
+**/logs/**

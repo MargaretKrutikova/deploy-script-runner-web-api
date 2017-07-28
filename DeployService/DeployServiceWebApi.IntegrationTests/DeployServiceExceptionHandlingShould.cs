@@ -17,21 +17,21 @@ namespace DeployServiceWebApi.IntegrationTests
 		private readonly Uri _baseAddress = new Uri("https://localhost/");
 
 		[Fact]
-		public async Task Returns500AndDeploymentErrorObject_IfErrorDuringDeployment()
+		public async Task Returns400AndJobAlreadyRunningErrorObject_IfJobWithProjectAndGropAlreadyRunning()
 		{
-			var builder = new WebHostBuilder()
-				.UseStartup<Startup>();
+			var builder = new WebHostBuilder().UseStartup<Startup>();
 
 			var server = new TestServer(builder);
 			var client = server.CreateClient();
 			client.BaseAddress = _baseAddress;
 
-			var response = await client.GetAsync("api/jobs?project=vds&group=error-test");
-			Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+			var createJobResponse = await client.GetAsync("api/jobs?project=vds&group=long-running-job");
+			var createDuplicateJobResponse = await client.GetAsync("api/jobs?project=vds&group=long-running-job");
+			Assert.Equal(HttpStatusCode.BadRequest, createDuplicateJobResponse.StatusCode);
 
-			var jsonResponse = JsonConvert.DeserializeObject<ErrorJsonObject>(await response.Content.ReadAsStringAsync());
-			Assert.Equal("500", jsonResponse.Status);
-			Assert.Equal("DeploymentError", jsonResponse.Title);
+			var jsonResponse = JsonConvert.DeserializeObject<ErrorJsonObject>(await createDuplicateJobResponse.Content.ReadAsStringAsync());
+			Assert.Equal("400", jsonResponse.Status);
+			Assert.Equal("JobAlreadyInProgress", jsonResponse.Title);
 
 			client.Dispose();
 			server.Dispose();
@@ -45,7 +45,15 @@ namespace DeployServiceWebApi.IntegrationTests
 				.ConfigureServices(services =>
 				{
 					services.AddSingleton(
-						serviceProvider => FakeConfigurationOptions(serviceProvider, settingsPath: "non-existing-path/empty.json"));
+						serviceProvider => 
+						/*new OptionsManager<ConfigurationOptions>(new IConfigureOptions<ConfigurationOptions>[]
+						{
+							new ConfigureOptions<ConfigurationOptions>(options =>
+							{
+								options.DeploySettingsPath = "non-existing-path/empty.json";
+							})
+						}));*/
+						FakeConfigurationOptions(serviceProvider, settingsPath: "non-existing-path/empty.json"));
 				})
 				.UseStartup<Startup>();
 
@@ -54,7 +62,7 @@ namespace DeployServiceWebApi.IntegrationTests
 			var client = server.CreateClient();
 			client.BaseAddress = _baseAddress;
 
-			var response = await client.GetAsync("api/groups");
+			var response = await client.GetAsync("api/settings/groups");
 			Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
 
 
@@ -76,7 +84,7 @@ namespace DeployServiceWebApi.IntegrationTests
 			var client = server.CreateClient();
 			client.BaseAddress = _baseAddress;
 
-			var response = await client.GetAsync("api/deployGroup/unknown");
+			var response = await client.GetAsync("api/jobs?project=unknown&group=unknown");
 			Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
 
 			var jsonResponse = JsonConvert.DeserializeObject<ErrorJsonObject>(await response.Content.ReadAsStringAsync());
@@ -87,7 +95,7 @@ namespace DeployServiceWebApi.IntegrationTests
 			server.Dispose();
 		}
 
-		public IOptions<ConfigurationOptions> FakeConfigurationOptions(
+		private IOptions<ConfigurationOptions> FakeConfigurationOptions(
 			IServiceProvider provider,
 			string settingsPath = null,
 			string checkoutScriptPath = null)

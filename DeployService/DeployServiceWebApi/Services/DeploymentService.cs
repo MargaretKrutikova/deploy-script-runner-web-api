@@ -105,7 +105,7 @@ namespace DeployServiceWebApi.Services
 			{
 				StartInfo =
 				{
-					FileName = scriptPath,
+					FileName = "cmd.exe \"scriptPath\"",
 					Arguments = args,
 					RedirectStandardOutput = true,
 					RedirectStandardError = true
