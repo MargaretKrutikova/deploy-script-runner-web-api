@@ -66,18 +66,21 @@ namespace DeployServiceWebApi.Services
 		{
 			try
 			{
-				// 1. make sure the settings repository is updated
 				_jobsDataAccess.SetInProgress(jobId, "Updating settings repository.");
 
+				// 1. make sure the settings repository is updated
 				UpdateRepository(repo.RemoteUrl, repo.LocalPath);
 
 				// 2. run deployables located in the settings repository
 				foreach (var deployable in deployables)
 				{
 					var path = Path.Combine(repo.LocalPath, deployable);
-					if (!File.Exists(path)) continue;
-
 					_jobsDataAccess.SetInProgress(jobId, $"Running deployable {Path.GetFileName(path)}");
+					
+					if (!File.Exists(path)) 
+					{
+						throw new DeploymentException($"File cannot be found: {path}");
+					};
 
 					ExecuteScript(path);
 				}
@@ -105,7 +108,7 @@ namespace DeployServiceWebApi.Services
 			{
 				StartInfo =
 				{
-					FileName = "cmd.exe \"scriptPath\"",
+					FileName = (new FileInfo(scriptPath)).FullName,
 					Arguments = args,
 					RedirectStandardOutput = true,
 					RedirectStandardError = true
