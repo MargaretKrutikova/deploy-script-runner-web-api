@@ -3,7 +3,7 @@ using DeploymentJobs.DataAccess;
 
 namespace DeployServiceWebApi.Models
 {
-    public class DeploymentJobDto
+    public class DeploymentJobModel
     {
 	    public string Id { get; }
 
@@ -21,7 +21,7 @@ namespace DeployServiceWebApi.Models
 
 	    public string EndTime { get; }
 
-	    public DeploymentJobDto(
+	    public DeploymentJobModel(
 		    string id,
 		    string project,
 		    string group,
@@ -41,7 +41,7 @@ namespace DeployServiceWebApi.Models
 		    EndTime = FormatDate(endTime);
 	    }
 
-	    public DeploymentJobDto(DeploymentJob job)
+	    public DeploymentJobModel(DeploymentJob job)
 	    {
 		    Id = job.Id;
 		    Project = job.Project;

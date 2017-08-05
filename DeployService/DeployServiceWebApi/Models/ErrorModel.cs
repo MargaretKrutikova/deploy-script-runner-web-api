@@ -2,7 +2,7 @@
 
 namespace DeployServiceWebApi.Exceptions
 {
-	public class ErrorJsonObject
+	public class ErrorModel
 	{
 		public string Status { get; set; }
 
@@ -10,7 +10,7 @@ namespace DeployServiceWebApi.Exceptions
 
 		public string Detail { get; set; }
 
-		public ErrorJsonObject(string title, string detail, HttpStatusCode statusCode)
+		public ErrorModel(string title, string detail, HttpStatusCode statusCode)
 		{
 			Title = title;
 			Detail = detail;

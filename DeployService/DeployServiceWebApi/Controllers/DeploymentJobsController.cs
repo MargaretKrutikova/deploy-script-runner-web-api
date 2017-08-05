@@ -2,8 +2,10 @@
 using DeploymentJobs.DataAccess;
 using DeploymentSettings;
 using DeployServiceWebApi.Exceptions;
+using DeployServiceWebApi.Filters;
 using DeployServiceWebApi.Models;
 using DeployServiceWebApi.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DeployServiceWebApi.Controllers
@@ -25,21 +27,22 @@ namespace DeployServiceWebApi.Controllers
 			_deploymentService = deploymentService;
 		}
 
-		// GET api/values
+		// GET api/jobs
 		/*[HttpGet]
-		public IEnumerable<string> Get()
+		public IActionResult Get()
 		{
 			return new string[] { "value1", "value2" };
 		}*/
 
 		// GET api/jobs/5
 		[HttpGet("{id}")]
+		[Authorize]
 		public IActionResult Get(string id)
 		{
 			if (!_jobsDataAccess.TryGetJob(id, out DeploymentJob job))
 			{
 				// error object corresponding to missing job.
-				var error = new ErrorJsonObject(
+				var error = new ErrorModel(
 					"JobNotFound", 
 					$"Job with id {id} was not found.",
 					HttpStatusCode.NotFound);
@@ -47,20 +50,22 @@ namespace DeployServiceWebApi.Controllers
 				return NotFound(error);
 			}
 
-			return Ok(new DeploymentJobDto(job));
+			return Ok(new DeploymentJobModel(job));
 		}
 
-		// GET api/jobs/5
-		[HttpGet]
-		public IActionResult Get(string project, string group)
+		// POST api/jobs
+		[HttpPost]
+		[Authorize]
+		[ValidateModel]
+		public IActionResult Post([FromBody] CreateJobModel jobModel)
 		{
-			// TODO: project should be included in the deplyment settings
-			if (!_deploymentSettings.TryGetDeployablesByGroup(group, out string[] deployables))
+			// TODO: project should be included in the deployment settings
+			if (!_deploymentSettings.TryGetDeployablesByGroup(jobModel.Group, out string[] deployables))
 			{
 				// error object corresponding to missing group.
-				var error = new ErrorJsonObject(
+				var error = new ErrorModel(
 					"GroupNotFound",
-					$"Group {group} was not found.",
+					$"Group {jobModel.Group} was not found.",
 					HttpStatusCode.NotFound);
 
 				return NotFound(error);
@@ -69,25 +74,19 @@ namespace DeployServiceWebApi.Controllers
 			var repoSettings = _deploymentSettings.GetRepoSettings();
 
 			if (!_deploymentService.TryRunJobIfNotInProgress(
-				project, group, repoSettings, deployables, out DeploymentJob job))
+				jobModel.Project, jobModel.Group, repoSettings, deployables, out DeploymentJob job))
 			{
 				// error object corresponding to job already running.
 				// TODO: probably return currently running job?
-				var error = new ErrorJsonObject(
+				var error = new ErrorModel(
 					"JobAlreadyInProgress",
-					$"Job for the project {project} and group {group} is already running",
+					$"Job for the project {jobModel.Project} and group {jobModel.Group} is already running",
 					HttpStatusCode.BadRequest);
 
 				return BadRequest(error);
 			}
 
-			return Accepted(new DeploymentJobDto(job));
-		}
-
-		// POST api/values
-		[HttpPost]
-		public void Post([FromBody]string value)
-		{
+			return Accepted(new DeploymentJobModel(job));
 		}
 
 		// PUT api/values/5

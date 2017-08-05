@@ -46,7 +46,7 @@ namespace DeployServiceWebApi.Exceptions
 				errorTitle = deployServiceException.Title;
 			}
 
-			var error = new ErrorJsonObject(errorTitle, exception.Message, code);
+			var error = new ErrorModel(errorTitle, exception.Message, code);
 			var result = JsonConvert.SerializeObject(error);
 
 			context.Response.ContentType = "application/json";

@@ -11,7 +11,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Serilog;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.Extensions.Options;
 
 namespace DeployServiceWebApi
 {
@@ -51,8 +55,11 @@ namespace DeployServiceWebApi
 			});
 
 	        services.Configure<ConfigurationOptions>(Configuration);
+			services.Configure<JwtOptions>(options => Configuration.GetSection("JwtOptions").Bind(options));
+			services.Configure<CustomAuthorizationOptions>(options => Configuration.GetSection("AuthorizationOptions").Bind(options));
 
 	        services.TryAddScoped<IDeploymentService, DeploymentService>();
+			services.TryAddSingleton<IUserService, UserService>();
 			services.TryAddSingleton<IDeploymentSettingsDataStore, DeploymentSettingsDataStore>();
 	        services.TryAddSingleton<IDeploymentJobDataAccess, DeploymentJobDataAccess>();
 		}
@@ -80,9 +87,11 @@ namespace DeployServiceWebApi
 				    app.UseExceptionHandlingMiddleware();
 			    }
 
-			    app.UseDeploymentSettingsDataInitializer();
-			    app.UseMvc();
-		    }
+				app.UseDeploymentSettingsDataInitializer();
+				
+				app.UseJwtBearerAuthenticationWithCustomJwtValidation();
+				app.UseMvc();
+			}
 		    catch (Exception exception)
 		    {
 			    logger.LogError("Startup error occured.", exception);
