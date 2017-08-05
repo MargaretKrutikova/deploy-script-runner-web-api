@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using DeploymentSettings.Json;
 using DeploymentSettings.Models;
 
@@ -16,9 +17,12 @@ namespace DeploymentSettings
 				throw new InvalidOperationException("Data has already been initialized");
 			}
 
+			// convert to full path if it specified as relative path in the settings.
+			string fullRepoLocalPath = (new FileInfo(settingsJson.SettingsRepoLocalPath)).FullName;
+
 			_deploymentSettings = new GlobalDeploymentSettings(
 				settingsJson.SettingsRepoSvnUrl,
-				settingsJson.SettingsRepoLocalPath,
+				fullRepoLocalPath,
 				settingsJson.GroupDeployablePaths,
 				settingsJson.ServiceDeployablePaths);
 		}
