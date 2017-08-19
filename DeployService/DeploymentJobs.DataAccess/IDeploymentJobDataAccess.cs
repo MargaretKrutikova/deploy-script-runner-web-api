@@ -2,7 +2,7 @@
 {
 	public interface IDeploymentJobDataAccess
 	{
-		DeploymentJob GetOrCreate(string project, string group);
+		DeploymentJob GetOrCreate(string project, string Service);
 
 		bool TryGetJob(string jobId, out DeploymentJob job);
 

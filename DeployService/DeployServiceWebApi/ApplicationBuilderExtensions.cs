@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace DeployServiceWebApi
 {
@@ -22,8 +23,14 @@ namespace DeployServiceWebApi
 		    var configOptions = app.ApplicationServices.GetRequiredService<IOptions<ConfigurationOptions>>();
 		    var settingsPath = configOptions.Value.DeploySettingsPath;
 
-		    var settingsJson = JsonConvert.DeserializeObject<GlobalDeploymentSettingsJson>(
-			    File.ReadAllText(settingsPath));
+			var jsonSerializerSettings = new JsonSerializerSettings 
+			{ 
+				ContractResolver = new CamelCasePropertyNamesContractResolver(),
+				NullValueHandling = NullValueHandling.Ignore // ignore null values
+			};
+
+			var settingsString = File.ReadAllText(settingsPath);
+		    var settingsJson = JsonConvert.DeserializeObject<GlobalDeploymentSettingsJson>(settingsString, jsonSerializerSettings);
 
 		    dataStoreService.InitializeData(settingsJson);
 	    }

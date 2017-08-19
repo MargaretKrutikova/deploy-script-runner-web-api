@@ -17,9 +17,8 @@ namespace DeployServiceWebApi.Services
 	{
 		bool TryRunJobIfNotInProgress(
 			string project, 
-			string group, 
-			SettingsRepo repo, 
-			IEnumerable<string> deployables,
+			string service, 
+			List<DeploymentScript> scripts,
 			out DeploymentJob job);
 	}
 
@@ -27,62 +26,48 @@ namespace DeployServiceWebApi.Services
 	{
 		private readonly ILogger<DeploymentService> _logger;
 		private readonly IDeploymentJobDataAccess _jobsDataAccess;
-		private readonly string _svnCeckoutScriptPath;
-		private const string SvnCheckoutFlags = "--non-interactive --trust-server-cert --no-auth-cache";
+		//private const string SvnCheckoutFlags = "--non-interactive --trust-server-cert --no-auth-cache";
 
 		public DeploymentService(
-			IOptions<ConfigurationOptions> optionsAccessor,
 			ILogger<DeploymentService> logger,
 			IDeploymentJobDataAccess jobsDataAccess)
 		{
 			_logger = logger;
 			_jobsDataAccess = jobsDataAccess;
-			_svnCeckoutScriptPath = optionsAccessor.Value.RepoUpdateScriptPath;
 		}
 
 		public bool TryRunJobIfNotInProgress(
 			string project, 
-			string group,
-			SettingsRepo repo, 
-			IEnumerable<string> deployables,
+			string service, 
+			List<DeploymentScript> scripts,
 			out DeploymentJob job)
 		{
-			job = _jobsDataAccess.GetOrCreate(project, group);
+			job = _jobsDataAccess.GetOrCreate(project, service);
 			if (job.Status == DeploymentJobStatus.IN_PROGRESS)
 			{
 				return false;
 			}
 
 			var jobId = job.Id;
-			Task.Run(() => RunJob(jobId, repo, deployables));
+			Task.Run(() => RunJob(jobId, scripts));
 			
 			return true;
 		}
 
-		private void RunJob(
-			string jobId, 
-			SettingsRepo repo,
-			IEnumerable<string> deployables)
+		private void RunJob(string jobId, List<DeploymentScript> scripts)
 		{
 			try
 			{
-				_jobsDataAccess.SetInProgress(jobId, "Updating settings repository.");
-
-				// 1. make sure the settings repository is updated
-				UpdateRepository(repo.RemoteUrl, repo.LocalPath);
-
-				// 2. run deployables located in the settings repository
-				foreach (var deployable in deployables)
+				foreach (var script in scripts)
 				{
-					var path = Path.Combine(repo.LocalPath, deployable);
-					_jobsDataAccess.SetInProgress(jobId, $"Running deployable {Path.GetFileName(path)}");
+					_jobsDataAccess.SetInProgress(jobId, $"Running script {Path.GetFileName(script.Path)}");
 					
-					if (!File.Exists(path)) 
+					if (!File.Exists(script.Path)) 
 					{
-						throw new DeploymentException($"File cannot be found: {path}");
+						throw new DeploymentException($"File cannot be found: {script.Path}");
 					};
 
-					ExecuteScript(path);
+					ExecuteScript(script);
 				}
 
 				_jobsDataAccess.SetSuccess(jobId);
@@ -95,26 +80,19 @@ namespace DeployServiceWebApi.Services
 				_logger.LogError(errorMessage, ex);
 			}
 		}
-
-		private void UpdateRepository(string repoUrl, string localPath)
-		{
-			var args = $"\"{repoUrl}\" \"{localPath}\" {SvnCheckoutFlags}";
-			ExecuteScript(_svnCeckoutScriptPath, args);
-		}
-
-		private void ExecuteScript(string scriptPath, string args = "")
+		private void ExecuteScript(DeploymentScript script)
 		{
 			var proc = new Process
 			{
 				StartInfo =
 				{
-					FileName = (new FileInfo(scriptPath)).FullName,
-					Arguments = args,
+					FileName = (new FileInfo(script.Path)).FullName,
+					Arguments = script.Arguments,
 					RedirectStandardOutput = true,
 					RedirectStandardError = true
 				}
 			};
-			_logger.LogInformation($"Starting script {Path.GetFileName(scriptPath)}");
+			_logger.LogInformation($"Starting script {Path.GetFileName(script.Path)}");
 			
 			proc.Start();
 
@@ -129,9 +107,10 @@ namespace DeployServiceWebApi.Services
 
 			if (proc.ExitCode != 0)
 			{
-				var message = $"Error running script {Path.GetFileName(scriptPath)}, exit code: {proc.ExitCode}";
+				var message = $"Error running script {Path.GetFileName(script.Path)}, exit code: {proc.ExitCode}";
 				throw new DeploymentException(message);
 			}
+			//proc.Id
 		}
 
 		private void LogIfNotEmpty(string logMessage, LogEventLevel level = LogEventLevel.Information)

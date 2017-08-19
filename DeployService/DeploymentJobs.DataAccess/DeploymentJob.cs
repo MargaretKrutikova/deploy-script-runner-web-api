@@ -8,7 +8,7 @@ namespace DeploymentJobs.DataAccess
 
 	    public string Project { get; } // e.g. vds, sds, some-other-ds
 
-	    public string Group { get; } // defined within a project, e.g. stage, wip, live etc.
+	    public string Service { get; } // defined within a project, e.g. stage, wip, live etc.
 
 	    public DeploymentJobStatus Status { get; }
 
@@ -20,11 +20,11 @@ namespace DeploymentJobs.DataAccess
 
 	    public DateTime? EndTime { get; }
 
-		public DeploymentJob(string id, string project, string @group)
+		public DeploymentJob(string id, string project, string service)
 	    {
 		    Id = id;
 		    Project = project;
-		    Group = @group;
+		    Service = service;
 		    Status = DeploymentJobStatus.NOT_STARTED;
 		    CreatedTime = DateTime.Now;
 	    }
@@ -32,7 +32,7 @@ namespace DeploymentJobs.DataAccess
 	    private DeploymentJob(
 		    string id,
 		    string project,
-		    string @group,
+		    string service,
 		    DeploymentJobStatus status,
 			string currentAction,
 			string errorMessage,
@@ -41,7 +41,7 @@ namespace DeploymentJobs.DataAccess
 	    {
 		    Id = id;
 		    Project = project;
-		    Group = @group;
+		    Service = service;
 		    Status = status;
 		    CurrentAction = currentAction;
 		    ErrorMessage = errorMessage;
@@ -55,7 +55,7 @@ namespace DeploymentJobs.DataAccess
 		    return new DeploymentJob(
 			    this.Id,
 			    this.Project,
-			    this.Group,
+			    this.Service,
 			    DeploymentJobStatus.FAIL,
 			    this.CurrentAction,
 			    errorMessage,
@@ -68,7 +68,7 @@ namespace DeploymentJobs.DataAccess
 			return new DeploymentJob(
 				this.Id,
 				this.Project,
-				this.Group,
+				this.Service,
 				DeploymentJobStatus.SUCCESS,
 				this.CurrentAction,
 				null,
@@ -81,7 +81,7 @@ namespace DeploymentJobs.DataAccess
 			return new DeploymentJob(
 				this.Id,
 				this.Project,
-				this.Group,
+				this.Service,
 				DeploymentJobStatus.IN_PROGRESS,
 				currentAction,
 				null,

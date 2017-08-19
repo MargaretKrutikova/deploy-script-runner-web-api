@@ -19,10 +19,10 @@ namespace DeployServiceWebApi.Controllers
 			_logger = logger;
 	    }
 
-	    [HttpGet("groups")]
-	    public IActionResult GetGroups()
+	    [HttpGet("projects")]
+	    public IActionResult GetProjects()
 	    {
-		    return Ok(_deploymentSettingsStore.GetGroups().ToList());
+		    return Ok(_deploymentSettingsStore.GetProjects().ToList());
 	    }
     }
 }

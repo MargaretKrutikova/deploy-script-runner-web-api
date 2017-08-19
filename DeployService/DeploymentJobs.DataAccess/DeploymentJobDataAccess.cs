@@ -18,18 +18,18 @@ namespace DeploymentJobs.DataAccess
 
 		public DeploymentJob GetOrCreate(
 			string project,
-			string group)
+			string service)
 		{
 			lock (_lockObject)
 			{
 				var jobInProgress = _deploymentJobsDictionary.Values.FirstOrDefault(
 					j => j.Project == project &&
-					     j.Group == group &&
+					     j.Service == service &&
 					     j.Status == DeploymentJobStatus.IN_PROGRESS);
 
 				if (jobInProgress != null) return jobInProgress;
 
-				var newJob = new DeploymentJob(GenerateUid(), project, group);
+				var newJob = new DeploymentJob(GenerateUid(), project, service);
 				_deploymentJobsDictionary.Add(newJob.Id, newJob);
 
 				return newJob;

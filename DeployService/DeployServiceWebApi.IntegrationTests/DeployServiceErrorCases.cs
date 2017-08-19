@@ -25,7 +25,7 @@ namespace DeployServiceWebApi.IntegrationTests
         [Fact]
 		public async Task CreatingJobWithProjectAndGropAlreadyRunning_ShouldReturn_400AndJobAlreadyRunningErrorObject()
 		{
-			var data = new { project = "vds", group = "long-running-job"};
+			var data = new { project = "test", service = "long-running-job"};
 			var createJobResponse = await PostDataAsync(data, _jobsEndpoint);
 			var createDuplicateJobResponse = await PostDataAsync(data, _jobsEndpoint);
 
@@ -52,7 +52,7 @@ namespace DeployServiceWebApi.IntegrationTests
 			client.BaseAddress = _baseAddress;
 			SetAuthTokenHeader(client);
 
-			var response = await client.GetAsync($"{_settingsEndpoint}/groups");
+			var response = await client.GetAsync($"{_settingsEndpoint}/projects");
 			Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
 
 			var jsonResponse = JsonConvert.DeserializeObject<ErrorModel>(await response.Content.ReadAsStringAsync());
@@ -66,14 +66,14 @@ namespace DeployServiceWebApi.IntegrationTests
 		[Fact]
 		public async Task CreatingJobWithNonExistingGroup_ShouldReturn_404NotFoundAndGroupNotFoundError()
 		{
-			var data = new { project = "unknown", group = "unknown"};
+			var data = new { project = "unknown", service = "unknown"};
 
 			var response = await PostDataAsync(data, _jobsEndpoint);
 			Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
 
 			var jsonResponse = JsonConvert.DeserializeObject<ErrorModel>(await response.Content.ReadAsStringAsync());
 			Assert.Equal("404", jsonResponse.Status);
-			Assert.Equal("GroupNotFound", jsonResponse.Title);
+			Assert.Equal("ProjectOrServiceNotFound", jsonResponse.Title);
 		}
 
 		private IOptions<ConfigurationOptions> CreateFakeConfigurationOptions(

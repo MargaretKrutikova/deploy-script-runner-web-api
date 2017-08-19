@@ -9,6 +9,6 @@ namespace DeployServiceWebApi.Models
         public string Project { get; set; }
 
         [Required]
-        public string Group { get; set; }
+        public string Service { get; set; }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using DeploymentSettings.Json;
 using DeploymentSettings.Models;
 
@@ -6,11 +7,12 @@ namespace DeploymentSettings
 {
 	public interface IDeploymentSettingsDataStore
 	{
-		SettingsRepo GetRepoSettings();
+		ReadOnlyDictionary<string, ProjectDeploymentSettings> GetProjects();
 
-		IEnumerable<string> GetGroups();
-
-		bool TryGetDeployablesByGroup(string group, out string[] deployables);
+		bool TryGetDeployScripts(
+			string project,
+			string service,
+			out List<DeploymentScript> scripts);
 
 		void InitializeData(GlobalDeploymentSettingsJson settingsJson);
 	}

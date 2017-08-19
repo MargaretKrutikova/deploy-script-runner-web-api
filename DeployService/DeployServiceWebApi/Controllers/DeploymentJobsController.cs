@@ -1,6 +1,8 @@
-﻿using System.Net;
+﻿using System.Collections.Generic;
+using System.Net;
 using DeploymentJobs.DataAccess;
 using DeploymentSettings;
+using DeploymentSettings.Models;
 using DeployServiceWebApi.Exceptions;
 using DeployServiceWebApi.Filters;
 using DeployServiceWebApi.Models;
@@ -59,28 +61,31 @@ namespace DeployServiceWebApi.Controllers
 		[ValidateModel]
 		public IActionResult Post([FromBody] CreateJobModel jobModel)
 		{
-			// TODO: project should be included in the deployment settings
-			if (!_deploymentSettings.TryGetDeployablesByGroup(jobModel.Group, out string[] deployables))
+			if (!_deploymentSettings.TryGetDeployScripts(
+				jobModel.Project,
+				jobModel.Service, 
+				out List<DeploymentScript> scripts))
 			{
-				// error object corresponding to missing group.
+				// error object corresponding to missing project/service.
 				var error = new ErrorModel(
-					"GroupNotFound",
-					$"Group {jobModel.Group} was not found.",
+					"ProjectOrServiceNotFound",
+					$"Project {jobModel.Project} or service {jobModel.Service} was not found.",
 					HttpStatusCode.NotFound);
 
 				return NotFound(error);
 			}
 
-			var repoSettings = _deploymentSettings.GetRepoSettings();
-
 			if (!_deploymentService.TryRunJobIfNotInProgress(
-				jobModel.Project, jobModel.Group, repoSettings, deployables, out DeploymentJob job))
+				jobModel.Project, 
+				jobModel.Service, 
+				scripts, 
+				out DeploymentJob job))
 			{
 				// error object corresponding to job already running.
 				// TODO: probably return currently running job?
 				var error = new ErrorModel(
 					"JobAlreadyInProgress",
-					$"Job for the project {jobModel.Project} and group {jobModel.Group} is already running",
+					$"Job for the project {jobModel.Project} and service {jobModel.Service} is already running",
 					HttpStatusCode.BadRequest);
 
 				return BadRequest(error);

@@ -9,7 +9,7 @@ namespace DeployServiceWebApi.Models
 
 	    public string Project { get; } 
 
-	    public string Group { get; } 
+	    public string Service { get; } 
 
 	    public string Status { get; }
 
@@ -24,7 +24,7 @@ namespace DeployServiceWebApi.Models
 	    public DeploymentJobModel(
 		    string id,
 		    string project,
-		    string group,
+		    string service,
 		    string status,
 		    string currentAction,
 		    string errorMessage,
@@ -33,7 +33,7 @@ namespace DeployServiceWebApi.Models
 	    {
 		    Id = id;
 		    Project = project;
-		    Group = group;
+		    Service = service;
 		    Status = status;
 		    CurrentAction = currentAction;
 		    ErrorMessage = errorMessage;
@@ -45,7 +45,7 @@ namespace DeployServiceWebApi.Models
 	    {
 		    Id = job.Id;
 		    Project = job.Project;
-		    Group = job.Group;
+		    Service = job.Service;
 		    Status = job.Status.ToString();
 		    CurrentAction = job.CurrentAction;
 		    ErrorMessage = job.ErrorMessage;

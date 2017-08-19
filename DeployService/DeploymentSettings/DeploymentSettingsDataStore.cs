@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using DeploymentSettings.Json;
 using DeploymentSettings.Models;
 
@@ -17,29 +19,42 @@ namespace DeploymentSettings
 				throw new InvalidOperationException("Data has already been initialized");
 			}
 
-			// convert to full path if it specified as relative path in the settings.
-			string fullRepoLocalPath = (new FileInfo(settingsJson.SettingsRepoLocalPath)).FullName;
+			var projectSettingsDictionary = settingsJson.Projects.ToDictionary(project => project.Key, project => 
+				new ProjectDeploymentSettings(
+					project.Value.Scripts.Select(script => new DeploymentScript(script.Path, script.Arguments)).ToList(),
+					project.Value.Services.ToDictionary(service => service.Key, service => new ServiceDeploymentSettings(
+										service.Value.DisplayText,
+										service.Value.Scripts.Select(
+											script => new DeploymentScript(
+												Path.Combine(project.Value.ServiceScriptsRootPath, script.Path), 
+												script.Arguments))
+															.ToList())),
+					project.Value.ServiceScriptsRootPath
+				));
 
-			_deploymentSettings = new GlobalDeploymentSettings(
-				settingsJson.SettingsRepoSvnUrl,
-				fullRepoLocalPath,
-				settingsJson.GroupDeployablePaths,
-				settingsJson.ServiceDeployablePaths);
+			_deploymentSettings = new GlobalDeploymentSettings(projectSettingsDictionary);
 		}
 
-	    public SettingsRepo GetRepoSettings()
-	    {
-		    return _deploymentSettings.GlobalSettingsRepo;
-	    }
-
-		public bool TryGetDeployablesByGroup(string group, out string[] deployables)
+		public bool TryGetDeployScripts(
+			string project,
+			string service,
+			out List<DeploymentScript> scripts)
 		{
-			return _deploymentSettings.GroupDeployablePaths.TryGetValue(group, out deployables);
+			if (!_deploymentSettings.Projects.TryGetValue(project, out ProjectDeploymentSettings projectSettings) ||
+				!projectSettings.Services.TryGetValue(service, out ServiceDeploymentSettings serviceSettings))
+			{
+				scripts = null;
+				return false;
+			}
+			
+			scripts = new List<DeploymentScript>(projectSettings.Scripts);
+			scripts.AddRange(serviceSettings.Scripts);
+			return true;
 		}
 
-		public IEnumerable<string> GetGroups()
+		public ReadOnlyDictionary<string, ProjectDeploymentSettings> GetProjects()
 		{
-			return _deploymentSettings.GroupDeployablePaths.Keys;
+			return _deploymentSettings.Projects;
 		}
 	}
 }

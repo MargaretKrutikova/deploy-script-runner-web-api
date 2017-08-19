@@ -1,9 +1,25 @@
 ﻿{
-  "SettingsRepoSvnUrl": "http://svn.test-url.com/settings",
-  "SettingsRepoLocalPath": "..\\..\\..\\test-resources\\deployables",
-  "GroupDeployablePaths": {
-    "error-test": [ "error-deployable.bat" ],
-    "wip": [ "wip-test.bat" ],
-    "long-running-job": [ "long-running.bat" ]
-  }
+	"projects" : { 
+		"test": {
+			"scripts": [{
+				"arguments": "\"http://svn.test-url.com/settings\" \"..\\..\\..\\test-resources\\deployables\"",
+				"path": "..\\..\\..\\test-resources\\checkout.bat"
+			}],
+			"serviceScriptsRootPath": "..\\..\\..\\test-resources\\deployables",
+			"services": {
+				"wip" : {
+					"displayText": "test wip services",
+					"scripts": [ {"path": "wip-test.bat"} ]
+				},
+				"error-test": {
+					"displayText": "test error service",
+					"scripts": [{"path": "wip-test.bat"}]
+        },
+        "long-running-job": {
+					"displayText": "test long running service",
+					"scripts": [{"path": "long-running.bat"}]
+				}
+			}
+		}
+	}
 }

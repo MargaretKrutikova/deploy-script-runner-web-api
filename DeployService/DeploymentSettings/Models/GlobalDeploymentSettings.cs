@@ -1,37 +1,55 @@
 ﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace DeploymentSettings.Models
 {
 	public class GlobalDeploymentSettings
 	{
-		public GlobalDeploymentSettings(
-			string remoteUrl, 
-			string localPath, 
-			Dictionary<string, string[]> groupDeployablePaths, 
-			Dictionary<string, string[]> serviceDeployablePaths)
+		public GlobalDeploymentSettings(Dictionary<string, ProjectDeploymentSettings> projects)
 		{
-			GlobalSettingsRepo = new SettingsRepo(remoteUrl, localPath);
-			GroupDeployablePaths = groupDeployablePaths;
-			ServiceDeployablePaths = serviceDeployablePaths;
+			Projects = new ReadOnlyDictionary<string, ProjectDeploymentSettings>(projects);
 		}
-
-		public SettingsRepo GlobalSettingsRepo { get; }
-		
-		public  Dictionary<string, string[]> GroupDeployablePaths { get; }
-
-		public Dictionary<string, string[]> ServiceDeployablePaths { get; }
+		public ReadOnlyDictionary<string, ProjectDeploymentSettings> Projects { get; }
 	}
 
-	public class SettingsRepo
+	public class ProjectDeploymentSettings
 	{
-		public string RemoteUrl { get; }
-
-		public string LocalPath { get; }
-
-		public SettingsRepo(string remoteUrl, string localPath)
+		public ProjectDeploymentSettings(
+			List<DeploymentScript> scripts,
+			Dictionary<string, ServiceDeploymentSettings> services,
+			string serviceScriptsRootPath)
 		{
-			RemoteUrl = remoteUrl;
-			LocalPath = localPath;
+			Scripts = scripts.AsReadOnly();
+			Services = new ReadOnlyDictionary<string, ServiceDeploymentSettings>(services);
+			ServiceScriptsRootPath = serviceScriptsRootPath;
 		}
+		public IReadOnlyCollection<DeploymentScript> Scripts { get; }
+		public ReadOnlyDictionary<string, ServiceDeploymentSettings> Services { get; }
+
+		public string ServiceScriptsRootPath { get; }
+	}
+
+	public class ServiceDeploymentSettings
+	{
+		public ServiceDeploymentSettings(
+			string text, 
+			List<DeploymentScript> scripts)
+		{
+			DisplayText = text;
+			Scripts = scripts.AsReadOnly();
+		}
+		public string DisplayText { get; }
+		public IReadOnlyCollection<DeploymentScript> Scripts { get; }
+	}
+
+	public class DeploymentScript
+	{
+		public DeploymentScript(string path, string args)
+		{
+			Path = path;
+			Arguments = args;
+		}
+		public string Path { get; }
+		public string Arguments { get; }
 	}
 }

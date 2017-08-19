@@ -1,1 +1,0 @@
-svn co %* --username <svn-username> --password <svn-password>

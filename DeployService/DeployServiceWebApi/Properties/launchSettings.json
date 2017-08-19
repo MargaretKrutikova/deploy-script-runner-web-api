@@ -10,7 +10,7 @@
   "profiles": {
     "IIS Express": {
       "commandName": "IISExpress",
-      "launchUrl": "api/groups",
+      "launchUrl": "api/settings/projects",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
@@ -18,7 +18,7 @@
     "DeployService": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "api/groups",
+      "launchUrl": "api/settings/projects",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },

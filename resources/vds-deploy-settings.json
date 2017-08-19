@@ -1,8 +1,24 @@
 {
-	SettingsRepoSvnUrl: "https://svn.dummy-url.com/settings/trunk",
-	SettingsRepoLocalPath: "D:\\settings",
-	GroupDeployablePaths: {
-		"wip" : ["Deployables\\dummy-wip\\wip.bat"],
-		"stage": ["Deployables\\dummy-stage\\stage1.bat", "Deployables\\dummy-stage\\stage2.bat", "Deployables\\dummy-stage\\stage3.bat"]
+	"projects" : { 
+		"vds": {
+			"scripts": [{
+				"arguments": "\"https://svn.dummy-url.com/settings/trunk\" \"D:\\settings\"",
+				"path": "..\\tools\\checkout_svn.bat"
+			}],
+			"serviceScriptsRootPath": "D:\\settings\\Deployables",
+			"services": {
+				"wip" : {
+					"displayText": "all wip vds services",
+					"scripts": [
+						{"path": "dummy-wip\\wip.bat"},
+						{"path": "dummy-wip\\wip.bat"}
+					]
+				},
+				"volvoCareTestService": {
+					"displayText": "volvo care service for test",
+					"scripts": [{"path": "dummy-vc\\vs-test.bat"}]
+				}
+			}
+		}
 	}
 }
