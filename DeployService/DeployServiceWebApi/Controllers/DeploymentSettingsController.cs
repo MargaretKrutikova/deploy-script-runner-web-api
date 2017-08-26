@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using DeploymentSettings;
+using DeployServiceWebApi.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -22,7 +23,16 @@ namespace DeployServiceWebApi.Controllers
 	    [HttpGet("projects")]
 	    public IActionResult GetProjects()
 	    {
-		    return Ok(_deploymentSettingsStore.GetProjects().ToList());
+			ProjectModel[] projects = _deploymentSettingsStore.GetProjects().Select(p => 
+				new ProjectModel {
+					Name = p.Key,
+					Services = p.Value.Services.Select(s => new ServiceModel {
+						Name = s.Key,
+						Description = s.Value.DisplayText
+					}).ToArray()
+				}).ToArray();
+
+		    return Ok(projects);
 	    }
     }
 }
