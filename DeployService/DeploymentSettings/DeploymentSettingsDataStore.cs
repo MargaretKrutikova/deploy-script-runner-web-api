@@ -21,7 +21,7 @@ namespace DeploymentSettings
 
 			var projectSettingsDictionary = settingsJson.Projects.ToDictionary(project => project.Key, project => 
 				new ProjectDeploymentSettings(
-					project.Value.Scripts.Select(script => new DeploymentScript(script.Path, script.Arguments)).ToList(),
+					project.Value.Scripts?.Select(script => new DeploymentScript(script.Path, script.Arguments)).ToList(),
 					project.Value.Services.ToDictionary(service => service.Key, service => new ServiceDeploymentSettings(
 										service.Value.DisplayText,
 										service.Value.Scripts.Select(
@@ -47,7 +47,12 @@ namespace DeploymentSettings
 				return false;
 			}
 			
-			scripts = new List<DeploymentScript>(projectSettings.Scripts);
+			scripts = new List<DeploymentScript>();
+
+			if (projectSettings.Scripts != null) 
+			{
+				scripts.AddRange(projectSettings.Scripts);
+			}
 			scripts.AddRange(serviceSettings.Scripts);
 			return true;
 		}

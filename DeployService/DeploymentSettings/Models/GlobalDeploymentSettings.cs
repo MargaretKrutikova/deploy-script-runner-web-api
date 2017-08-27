@@ -17,9 +17,9 @@ namespace DeploymentSettings.Models
 		public ProjectDeploymentSettings(
 			List<DeploymentScript> scripts,
 			Dictionary<string, ServiceDeploymentSettings> services,
-			string serviceScriptsRootPath)
+			string serviceScriptsRootPath = "")
 		{
-			Scripts = scripts.AsReadOnly();
+			Scripts = scripts?.AsReadOnly();
 			Services = new ReadOnlyDictionary<string, ServiceDeploymentSettings>(services);
 			ServiceScriptsRootPath = serviceScriptsRootPath;
 		}

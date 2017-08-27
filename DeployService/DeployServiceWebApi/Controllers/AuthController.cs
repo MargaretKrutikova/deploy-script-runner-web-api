@@ -66,6 +66,7 @@ namespace DeployServiceWebApi.Controllers
 			);
 
 			return Ok(new {
+				userName = model.UserName,
 				token = new JwtSecurityTokenHandler().WriteToken(token),
 				expiration = token.ValidTo
 			});
