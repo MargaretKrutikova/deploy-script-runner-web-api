@@ -7,9 +7,13 @@ namespace DeploymentJobs.DataAccess
 	{
 		IEnumerable<DeploymentJob> GetCurrentJobs();
 
+		void CancelJob(string jobId);
+
 		DeploymentJob GetOrCreate(string project, string Service);
 
 		bool TryGetJob(string jobId, out DeploymentJob job);
+
+		bool CheckJobStatus(string jobId, DeploymentJobStatus statusToCheck);
 
 		DeploymentJob GetJob(string jobId);
 
@@ -17,7 +21,7 @@ namespace DeploymentJobs.DataAccess
 
 		void SetSuccess(string jobId);
 
-		void SetInProgress(string jobId, string action);
+		void SetInProgress(string jobId, string action, Process process = null);
 
 		void SetFail(string jobId, string errorMessage);
 	}

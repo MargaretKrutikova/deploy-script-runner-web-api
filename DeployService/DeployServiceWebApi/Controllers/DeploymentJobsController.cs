@@ -87,10 +87,25 @@ namespace DeployServiceWebApi.Controllers
 			return Accepted(new DeploymentJobModel(job));
 		}
 
-		// PUT api/values/5
+		// PUT api/jobs/71n8Z1gvH0aJpjiQNXwSCg
 		[HttpPut("{id}")]
-		public void Put(int id, [FromBody]string value)
+		[Authorize]
+		[ValidateModel]
+		public IActionResult Put(string id, [FromBody]UpdateJobModel jobModel)
 		{
+			// only cancelled is supported for now.
+			if (jobModel.Status != DeploymentJobStatus.CANCELLED)
+			{
+				var error = new ErrorModel(
+					"JobStatusNotSupported",
+					$"Status ${jobModel.Status} is currently not supported for job updates.",
+					HttpStatusCode.BadRequest);
+
+				return BadRequest(error);
+			}
+
+			_deploymentService.TryCancelJob(id);
+			return Ok();
 		}
 
 		// DELETE api/values/5

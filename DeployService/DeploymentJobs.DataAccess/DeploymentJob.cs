@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace DeploymentJobs.DataAccess
 {
@@ -20,6 +21,8 @@ namespace DeploymentJobs.DataAccess
 
 	    public DateTime? EndTime { get; }
 
+		public Process CurrentProcess { get; }
+
 		public DeploymentJob(string id, string project, string service)
 	    {
 		    Id = id;
@@ -37,7 +40,8 @@ namespace DeploymentJobs.DataAccess
 			string currentAction,
 			string errorMessage,
 			DateTime? createdTime,
-			DateTime? endTime = null)
+			DateTime? endTime = null,
+			Process currentProcess = null)
 	    {
 		    Id = id;
 		    Project = project;
@@ -47,8 +51,8 @@ namespace DeploymentJobs.DataAccess
 		    ErrorMessage = errorMessage;
 		    CreatedTime = createdTime;
 		    EndTime = endTime;
+			CurrentProcess = currentProcess;
 	    }
-
 
 	    public DeploymentJob WithStatusFail(string errorMessage)
 	    {
@@ -76,7 +80,9 @@ namespace DeploymentJobs.DataAccess
 				DateTime.Now);
 		}
 
-		public DeploymentJob WithStatusInProgress(string currentAction = null)
+		public DeploymentJob WithStatusInProgress(
+			string currentAction = null, 
+			Process currentProcess = null)
 	    {
 			return new DeploymentJob(
 				this.Id,
@@ -85,7 +91,22 @@ namespace DeploymentJobs.DataAccess
 				DeploymentJobStatus.IN_PROGRESS,
 				currentAction,
 				null,
-				this.CreatedTime);
+				this.CreatedTime,
+				null,
+				currentProcess);
+		}
+
+		public DeploymentJob WithStatusCancelled(string errorMessage = null)
+	    {
+			return new DeploymentJob(
+				this.Id,
+				this.Project,
+				this.Service,
+				DeploymentJobStatus.CANCELLED,
+				this.CurrentAction,
+				errorMessage,
+				this.CreatedTime,
+				DateTime.Now);
 		}
 
 	    public bool IsCompleted()

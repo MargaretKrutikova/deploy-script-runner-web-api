@@ -5,6 +5,7 @@ using System.IO;
 using System.Threading.Tasks;
 using DeploymentJobs.DataAccess;
 using DeploymentSettings.Models;
+using DeployService.Common.Exceptions;
 using DeployServiceWebApi.Exceptions;
 using DeployServiceWebApi.Options;
 using Microsoft.Extensions.Logging;
@@ -20,6 +21,8 @@ namespace DeployServiceWebApi.Services
 			string service, 
 			List<DeploymentScript> scripts,
 			out DeploymentJob job);
+
+		bool TryCancelJob(string jobId);
 	}
 
 	public class DeploymentService : IDeploymentService
@@ -34,6 +37,21 @@ namespace DeployServiceWebApi.Services
 		{
 			_logger = logger;
 			_jobsDataAccess = jobsDataAccess;
+		}
+
+		public bool TryCancelJob(string jobId)
+		{
+			try 
+			{
+				_jobsDataAccess.CancelJob(jobId);
+				return true;
+			}
+			catch(Exception ex) 
+			{
+				var errorMessage = $"Failed to cancel job with id ${jobId}.";
+				_logger.LogError(errorMessage, ex);
+			}
+			return false;
 		}
 
 		public bool TryRunJobIfNotInProgress(
@@ -60,14 +78,19 @@ namespace DeployServiceWebApi.Services
 			{
 				foreach (var script in scripts)
 				{
-					_jobsDataAccess.SetInProgress(jobId, $"Running script {Path.GetFileName(script.Path)}");
-					
 					if (!File.Exists(script.Path)) 
 					{
 						throw new DeploymentException($"File cannot be found: {script.Path}");
 					};
 
-					ExecuteScript(script);
+					// check if the job hasn't been cancelled and exit if it has.
+					if (_jobsDataAccess.CheckJobStatus(jobId, DeploymentJobStatus.CANCELLED))
+					{
+						_logger.LogInformation($"Job with id ${jobId} has been cancelled. Exiting deployment.");
+						return;
+					}
+
+					ExecuteScript(script, jobId);
 				}
 
 				_jobsDataAccess.SetSuccess(jobId);
@@ -75,12 +98,12 @@ namespace DeployServiceWebApi.Services
 			catch (Exception ex)
 			{
 				var errorMessage = $"Error running deployables: {ex.Message}";
-
-				_jobsDataAccess.SetFail(jobId, errorMessage);
 				_logger.LogError(errorMessage, ex);
+				
+				_jobsDataAccess.SetFail(jobId, errorMessage);
 			}
 		}
-		private void ExecuteScript(DeploymentScript script)
+		private void ExecuteScript(DeploymentScript script, string jobId)
 		{
 			var proc = new Process
 			{
@@ -95,7 +118,9 @@ namespace DeployServiceWebApi.Services
 			_logger.LogInformation($"Starting script {Path.GetFileName(script.Path)}");
 			
 			proc.Start();
-
+			
+			_jobsDataAccess.SetInProgress(jobId, $"Running script {Path.GetFileName(script.Path)}", proc);
+			
 			// read output and error streams async
 			proc.OutputDataReceived += (sender, eventArgs) => LogIfNotEmpty(eventArgs.Data);
 			proc.ErrorDataReceived += (sender, eventArgs) => LogIfNotEmpty(eventArgs.Data, LogEventLevel.Error);
@@ -110,7 +135,6 @@ namespace DeployServiceWebApi.Services
 				var message = $"Error running script {Path.GetFileName(script.Path)}, exit code: {proc.ExitCode}";
 				throw new DeploymentException(message);
 			}
-			//proc.Id
 		}
 
 		private void LogIfNotEmpty(string logMessage, LogEventLevel level = LogEventLevel.Information)

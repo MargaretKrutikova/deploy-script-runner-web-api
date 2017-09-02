@@ -5,6 +5,7 @@
 		NOT_STARTED,
 		IN_PROGRESS,
 		SUCCESS,
-		FAIL
+		FAIL,
+		CANCELLED
 	}
 }

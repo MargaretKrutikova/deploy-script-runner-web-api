@@ -43,6 +43,18 @@ namespace DeploymentJobs.DataAccess
 			}
 		}
 
+		public bool CheckJobStatus(string jobId, DeploymentJobStatus statusToCheck)
+		{
+			lock (_lockObject)
+			{
+				if (!_deploymentJobsDictionary.TryGetValue(jobId, out DeploymentJob job))
+				{
+					throw new DeploymentJobNotFoundException(jobId);
+				}
+				return job.Status == statusToCheck;
+			}
+		}
+
 		public DeploymentJob GetJob(string jobId)
 		{
 			lock (_lockObject)
@@ -60,6 +72,32 @@ namespace DeploymentJobs.DataAccess
 			lock (_lockObject)
 			{
 				return _deploymentJobsDictionary.TryGetValue(jobId, out job);
+			}
+		}
+
+		public void CancelJob(string jobId)
+		{
+			lock (_lockObject)
+			{
+				if (!_deploymentJobsDictionary.TryGetValue(jobId, out DeploymentJob job))
+				{
+					throw new DeploymentJobNotFoundException(jobId);
+				}
+				
+				_deploymentJobsDictionary[job.Id] = job.WithStatusCancelled();
+				
+				// Feature in question since it does process kill.
+				// try kill currently running process
+				// if (job.CurrentProcess == null || job.CurrentProcess.HasExited) return;
+				// try 
+				// {
+				// 	job.CurrentProcess.Kill();
+				// }
+				// catch(Exception) 
+				// {
+				// 	_deploymentJobsDictionary[job.Id] = job.WithStatusCancelled("Failed to kill currently running process");
+				// 	throw;
+				// }
 			}
 		}
 
