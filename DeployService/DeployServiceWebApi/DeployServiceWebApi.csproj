@@ -26,5 +26,6 @@
   <ItemGroup>
     <ProjectReference Include="..\DeploymentJobs.DataAccess\DeploymentJobs.DataAccess.csproj" />
     <ProjectReference Include="..\DeploymentSettings\DeploymentSettings.csproj" />
+    <ProjectReference Include="..\DeployService.Common\DeployService.Common.csproj" />
   </ItemGroup>
 </Project>

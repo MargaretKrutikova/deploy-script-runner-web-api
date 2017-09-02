@@ -1,10 +1,17 @@
-﻿namespace DeploymentJobs.DataAccess
+﻿using System.Collections.Generic;
+using System.Diagnostics;
+
+namespace DeploymentJobs.DataAccess
 {
 	public interface IDeploymentJobDataAccess
 	{
+		IEnumerable<DeploymentJob> GetCurrentJobs();
+
 		DeploymentJob GetOrCreate(string project, string Service);
 
 		bool TryGetJob(string jobId, out DeploymentJob job);
+
+		DeploymentJob GetJob(string jobId);
 
 		bool DeleteJob(string jobId);
 

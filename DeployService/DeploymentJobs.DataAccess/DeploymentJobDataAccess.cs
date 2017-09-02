@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
+using DeployService.Common.Exceptions;
 
 namespace DeploymentJobs.DataAccess
 {
@@ -14,6 +16,11 @@ namespace DeploymentJobs.DataAccess
 		public DeploymentJobDataAccess()
 	    {
 		    _deploymentJobsDictionary = new Dictionary<string, DeploymentJob>();
+		}
+
+		public IEnumerable<DeploymentJob> GetCurrentJobs() 
+		{
+			return _deploymentJobsDictionary.Values;
 		}
 
 		public DeploymentJob GetOrCreate(
@@ -36,6 +43,18 @@ namespace DeploymentJobs.DataAccess
 			}
 		}
 
+		public DeploymentJob GetJob(string jobId)
+		{
+			lock (_lockObject)
+			{
+				if (!_deploymentJobsDictionary.TryGetValue(jobId, out DeploymentJob job))
+				{
+					throw new DeploymentJobNotFoundException(jobId);
+				}
+				return job;
+			}
+		}
+
 		public bool TryGetJob(string jobId, out DeploymentJob job)
 		{
 			lock (_lockObject)
@@ -44,15 +63,15 @@ namespace DeploymentJobs.DataAccess
 			}
 		}
 
-		public void SetInProgress(string jobId, string action)
+		public void SetInProgress(string jobId, string action, Process currentProcess = null)
 		{
 			lock (_lockObject)
 			{
 				if (!_deploymentJobsDictionary.TryGetValue(jobId, out DeploymentJob job))
 				{
-					throw new KeyNotFoundException($"Job with id {jobId} was not found.");
+					throw new DeploymentJobNotFoundException(jobId);
 				}
-				_deploymentJobsDictionary[job.Id] = job.WithStatusInProgress(action);
+				_deploymentJobsDictionary[job.Id] = job.WithStatusInProgress(action, currentProcess);
 			}
 		}
 
@@ -62,7 +81,7 @@ namespace DeploymentJobs.DataAccess
 			{
 				if (!_deploymentJobsDictionary.TryGetValue(jobId, out DeploymentJob job))
 				{
-					throw new KeyNotFoundException($"Job with id {jobId} was not found.");
+					throw new DeploymentJobNotFoundException(jobId);
 				}
 				_deploymentJobsDictionary[job.Id] = job.WithStatusSuccess();
 			}
@@ -74,7 +93,7 @@ namespace DeploymentJobs.DataAccess
 			{
 				if (!_deploymentJobsDictionary.TryGetValue(jobId, out DeploymentJob job))
 				{
-					throw new KeyNotFoundException($"Job with id {jobId} was not found.");
+					throw new DeploymentJobNotFoundException(jobId);
 				}
 				_deploymentJobsDictionary[job.Id] = job.WithStatusFail(errorMessage);
 			}

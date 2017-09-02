@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DeployServiceWebApi.Exceptions
+namespace DeployService.Common.Exceptions
 {
 	public class DeployServiceGenericException : Exception
 	{

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Threading.Tasks;
+using DeployService.Common.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -38,13 +39,18 @@ namespace DeployServiceWebApi.Exceptions
 			_logger.LogError($"Error occured at ${context.Request.Path}", exception);
 
 			var code = HttpStatusCode.InternalServerError;
-			var errorTitle = "UnknownError";
+			string errorTitle = "UnknownError";
 
 			var deployServiceException = exception as DeployServiceGenericException;
 			if (deployServiceException != null)
 			{
 				errorTitle = deployServiceException.Title;
-			}
+
+				if (deployServiceException is DeploymentJobNotFoundException) 
+				{
+					code = HttpStatusCode.NotFound;
+				}
+			}			
 
 			var error = new ErrorModel(errorTitle, exception.Message, code);
 			var result = JsonConvert.SerializeObject(error);

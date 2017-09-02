@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using DeploymentJobs.DataAccess;
 using DeploymentSettings;
@@ -30,28 +31,20 @@ namespace DeployServiceWebApi.Controllers
 		}
 
 		// GET api/jobs
-		/*[HttpGet]
+		[HttpGet]
+		[Authorize]
 		public IActionResult Get()
 		{
-			return new string[] { "value1", "value2" };
-		}*/
+			return Ok(_jobsDataAccess.GetCurrentJobs()
+							.Select(job => new DeploymentJobLightModel(job)).ToArray());
+		}
 
 		// GET api/jobs/5
 		[HttpGet("{id}")]
 		[Authorize]
 		public IActionResult Get(string id)
 		{
-			if (!_jobsDataAccess.TryGetJob(id, out DeploymentJob job))
-			{
-				// error object corresponding to missing job.
-				var error = new ErrorModel(
-					"JobNotFound", 
-					$"Job with id {id} was not found.",
-					HttpStatusCode.NotFound);
-
-				return NotFound(error);
-			}
-
+			var job = _jobsDataAccess.GetJob(id);
 			return Ok(new DeploymentJobModel(job));
 		}
 

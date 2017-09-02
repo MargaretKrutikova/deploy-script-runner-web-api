@@ -16,6 +16,7 @@ using Serilog;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.Extensions.Options;
+using DeployService.Common.Exceptions;
 
 namespace DeployServiceWebApi
 {
@@ -44,8 +45,9 @@ namespace DeployServiceWebApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+			services.AddCors();
 			// Add framework services.
-	        services.AddMvc(opt =>
+			services.AddMvc(opt =>
 			{
 				if (!_env.IsProduction())
 				{
@@ -75,17 +77,16 @@ namespace DeployServiceWebApi
 
 			loggerFactory.AddConsole(Configuration.GetSection("Logging"));
 		    loggerFactory.AddDebug();
-
+			app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+				
 			try
 		    {
 			    if (env.IsDevelopment())
 			    {
 				    app.UseDeveloperExceptionPage();
 			    }
-			    else
-			    {
-				    app.UseExceptionHandlingMiddleware();
-			    }
+
+				app.UseExceptionHandlingMiddleware();	
 
 				app.UseDeploymentSettingsDataInitializer();
 				
