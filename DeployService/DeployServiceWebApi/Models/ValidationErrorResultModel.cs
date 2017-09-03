@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using DeployService.Common.Extensions;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace DeployServiceWebApi.Exceptions
@@ -13,7 +14,8 @@ namespace DeployServiceWebApi.Exceptions
             : base("ValidationError", detail, HttpStatusCode.BadRequest)
         {
             Errors = modelState.Keys
-                    .SelectMany(key => modelState[key].Errors.Select(x => new ValidationError(key, x.ErrorMessage)))
+                    .SelectMany(key => modelState[key].Errors.Select(
+                        x => new ValidationError(key.ToCamelCase(), x.ErrorMessage)))
                     .ToList();
         }
     }

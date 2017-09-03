@@ -5,6 +5,7 @@ using DeployService.Common.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace DeployServiceWebApi.Exceptions
 {
@@ -53,7 +54,13 @@ namespace DeployServiceWebApi.Exceptions
 			}			
 
 			var error = new ErrorModel(errorTitle, exception.Message, code);
-			var result = JsonConvert.SerializeObject(error);
+
+			var jsonSettings = new JsonSerializerSettings 
+			{ 
+				ContractResolver = new CamelCasePropertyNamesContractResolver(),
+				NullValueHandling = NullValueHandling.Ignore
+			};
+			var result = JsonConvert.SerializeObject(error, jsonSettings);
 
 			context.Response.ContentType = "application/json";
 			context.Response.StatusCode = (int)code;
