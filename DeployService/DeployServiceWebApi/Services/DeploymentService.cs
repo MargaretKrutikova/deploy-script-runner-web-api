@@ -22,7 +22,7 @@ namespace DeployServiceWebApi.Services
 			List<DeploymentScript> scripts,
 			out DeploymentJob job);
 
-		bool TryCancelJob(string jobId);
+		void CancelJob(string jobId);
 	}
 
 	public class DeploymentService : IDeploymentService
@@ -39,19 +39,17 @@ namespace DeployServiceWebApi.Services
 			_jobsDataAccess = jobsDataAccess;
 		}
 
-		public bool TryCancelJob(string jobId)
+		public void CancelJob(string jobId)
 		{
 			try 
 			{
 				_jobsDataAccess.CancelJob(jobId);
-				return true;
 			}
 			catch(Exception ex) 
 			{
-				var errorMessage = $"Failed to cancel job with id ${jobId}.";
-				_logger.LogError(errorMessage, ex);
+				_logger.LogError($"Failed to cancel job with id ${jobId}.", ex);
+				throw;
 			}
-			return false;
 		}
 
 		public bool TryRunJobIfNotInProgress(

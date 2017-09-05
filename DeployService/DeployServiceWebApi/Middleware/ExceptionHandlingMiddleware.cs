@@ -51,7 +51,11 @@ namespace DeployServiceWebApi.Exceptions
 				{
 					code = HttpStatusCode.NotFound;
 				}
-			}			
+				if (deployServiceException is DeployOperationNotAllowedException) 
+				{
+					code = HttpStatusCode.BadRequest; // better with 422 Unprocessable Entity
+				}
+			}
 
 			var error = new ErrorModel(errorTitle, exception.Message, code);
 

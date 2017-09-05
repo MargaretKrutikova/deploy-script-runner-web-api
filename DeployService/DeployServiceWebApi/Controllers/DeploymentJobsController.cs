@@ -99,19 +99,33 @@ namespace DeployServiceWebApi.Controllers
 				var error = new ErrorModel(
 					"JobStatusNotSupported",
 					$"Status ${jobModel.Status} is currently not supported for job updates.",
-					HttpStatusCode.BadRequest);
+					HttpStatusCode.BadRequest); // ?? 422 Unprocessable Entity
 
 				return BadRequest(error);
 			}
 
-			_deploymentService.TryCancelJob(id);
+			_deploymentService.CancelJob(id);
 			return Ok();
 		}
 
-		// DELETE api/values/5
+		// DELETE api/jobs/71n8Z1gvH0aJpjiQNXwSCg
 		[HttpDelete("{id}")]
-		public void Delete(int id)
+		[Authorize]
+		public IActionResult Delete(string id)
 		{
+			DeploymentJob deletedJob = _jobsDataAccess.DeleteJob(id);
+
+			return Ok(new DeploymentJobModel(deletedJob));
+		}
+
+		// DELETE api/jobs
+		[HttpDelete]
+		[Authorize]
+		public IActionResult DeleteAll()
+		{
+			_jobsDataAccess.DeleteAllFinished();
+			
+			return NoContent();
 		}
 	}
 }

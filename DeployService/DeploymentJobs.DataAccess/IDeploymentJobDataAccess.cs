@@ -17,7 +17,9 @@ namespace DeploymentJobs.DataAccess
 
 		DeploymentJob GetJob(string jobId);
 
-		bool DeleteJob(string jobId);
+		DeploymentJob DeleteJob(string jobId);
+
+		void DeleteAllFinished();
 
 		void SetSuccess(string jobId);
 

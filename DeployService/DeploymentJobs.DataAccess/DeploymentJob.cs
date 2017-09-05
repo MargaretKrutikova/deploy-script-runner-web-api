@@ -24,19 +24,19 @@ namespace DeploymentJobs.DataAccess
 		public Process CurrentProcess { get; }
 
 		public DeploymentJob(string id, string project, string service)
-	    {
-		    Id = id;
-		    Project = project;
-		    Service = service;
-		    Status = DeploymentJobStatus.NOT_STARTED;
-		    CreatedTime = DateTime.Now;
-	    }
+		{
+			Id = id;
+			Project = project;
+			Service = service;
+			Status = DeploymentJobStatus.NOT_STARTED;
+			CreatedTime = DateTime.Now;
+		}
 
-	    private DeploymentJob(
-		    string id,
-		    string project,
-		    string service,
-		    DeploymentJobStatus status,
+	  private DeploymentJob(
+		  string id,
+		  string project,
+		  string service,
+		  DeploymentJobStatus status,
 			string currentAction,
 			string errorMessage,
 			DateTime? createdTime,
@@ -51,7 +51,7 @@ namespace DeploymentJobs.DataAccess
 		    ErrorMessage = errorMessage;
 		    CreatedTime = createdTime;
 		    EndTime = endTime;
-			CurrentProcess = currentProcess;
+				CurrentProcess = currentProcess;
 	    }
 
 	    public DeploymentJob WithStatusFail(string errorMessage)
@@ -111,7 +111,9 @@ namespace DeploymentJobs.DataAccess
 
 	    public bool IsCompleted()
 	    {
-		    return Status == DeploymentJobStatus.FAIL || Status == DeploymentJobStatus.SUCCESS;
+		    return Status == DeploymentJobStatus.FAIL || 
+							Status == DeploymentJobStatus.SUCCESS || 
+							Status == DeploymentJobStatus.CANCELLED;
 	    }
 	}
 }

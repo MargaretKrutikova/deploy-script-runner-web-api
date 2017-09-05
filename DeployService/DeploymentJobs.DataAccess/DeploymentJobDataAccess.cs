@@ -14,8 +14,8 @@ namespace DeploymentJobs.DataAccess
 		private readonly object _lockObject = new object();
 
 		public DeploymentJobDataAccess()
-	    {
-		    _deploymentJobsDictionary = new Dictionary<string, DeploymentJob>();
+		{
+			_deploymentJobsDictionary = new Dictionary<string, DeploymentJob>();
 		}
 
 		public IEnumerable<DeploymentJob> GetCurrentJobs() 
@@ -83,7 +83,12 @@ namespace DeploymentJobs.DataAccess
 				{
 					throw new DeploymentJobNotFoundException(jobId);
 				}
-				
+
+				// job that has finished can't be deleted.
+				if (job.IsCompleted()) 
+				{
+					throw new DeployOperationNotAllowedException("Job is completed. Cancel on completed jobs is not allowed.");
+				}
 				_deploymentJobsDictionary[job.Id] = job.WithStatusCancelled();
 				
 				// Feature in question since it does process kill.
@@ -137,17 +142,43 @@ namespace DeploymentJobs.DataAccess
 			}
 		}
 
-		public bool DeleteJob(string jobId)
+		public DeploymentJob DeleteJob(string jobId)
 		{
 			lock (_lockObject)
 			{
-				return _deploymentJobsDictionary.Remove(jobId);
+				if (!_deploymentJobsDictionary.TryGetValue(jobId, out DeploymentJob job))
+				{
+					throw new DeploymentJobNotFoundException(jobId);
+				}
+
+				// job that is running can't be deleted.
+				if (job.Status == DeploymentJobStatus.IN_PROGRESS) 
+				{
+					throw new DeployOperationNotAllowedException("Job is in progress. Delete on running jobs is not allowed.");
+				}
+				_deploymentJobsDictionary.Remove(jobId);
+				return job;
+			}
+		}
+
+		public void DeleteAllFinished()
+		{
+			lock (_lockObject)
+			{
+				var keysToDelete = _deploymentJobsDictionary.Where(kvp => 
+						kvp.Value.Status != DeploymentJobStatus.IN_PROGRESS || 
+						kvp.Value.Status != DeploymentJobStatus.NOT_STARTED).Select(kvp => kvp.Key).ToArray();
+
+				foreach (var keyToDelete in keysToDelete)
+				{
+					_deploymentJobsDictionary.Remove(keyToDelete);
+				}
 			}
 		}
 
 		private static string GenerateUid()
-	    {
+		{
 			return Regex.Replace(Convert.ToBase64String(Guid.NewGuid().ToByteArray()), "[/+=]", "");
 		}
-    }
+	}
 }
