@@ -1,5 +1,6 @@
 ﻿using System;
 using DeploymentJobs.DataAccess;
+using DeployService.Common.Extensions;
 
 namespace DeployServiceWebApi.Models
 {
@@ -37,8 +38,8 @@ namespace DeployServiceWebApi.Models
 		    Status = status;
 		    CurrentAction = currentAction;
 		    ErrorMessage = errorMessage;
-		    CreatedTime = FormatDate(createdTime);
-		    EndTime = FormatDate(endTime);
+		    CreatedTime = createdTime.ToPresentationFormat();
+		    EndTime = endTime.ToPresentationFormat();
 	    }
 
 	    public DeploymentJobModel(DeploymentJob job)
@@ -49,13 +50,8 @@ namespace DeployServiceWebApi.Models
 		    Status = job.Status.ToString();
 		    CurrentAction = job.CurrentAction;
 		    ErrorMessage = job.ErrorMessage;
-		    CreatedTime = FormatDate(job.CreatedTime);
-		    EndTime = FormatDate(job.EndTime);
-	    }
-
-	    private static string FormatDate(DateTime? date)
-	    {
-		    return date.HasValue ? string.Format("{0:G}", date) : null;
+		    CreatedTime = job.CreatedTime.ToPresentationFormat();
+		    EndTime = job.EndTime.ToPresentationFormat();
 	    }
 	}
 }
