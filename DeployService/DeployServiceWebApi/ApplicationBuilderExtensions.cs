@@ -6,6 +6,7 @@ using DeploymentSettings.Json;
 using DeployServiceWebApi.Exceptions;
 using DeployServiceWebApi.Options;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -39,6 +40,25 @@ namespace DeployServiceWebApi
             this IApplicationBuilder app)
         {
             return app.UseMiddleware<ExceptionHandlingMiddleware>();
+        }
+
+        public static IApplicationBuilder UseCorsFromOptions(this IApplicationBuilder app)
+        {
+            var corsOptions = app.ApplicationServices.GetRequiredService<IOptions<ConfigurationOptions>>().Value;
+            
+            return app.UseCors(builder => builder
+                .WithOriginsOrAny(corsOptions.CorsOrigins)
+                .AllowAnyHeader()
+                .AllowAnyMethod());
+        }
+
+        public static CorsPolicyBuilder WithOriginsOrAny(
+            this CorsPolicyBuilder builder, 
+            string[] origins) 
+        {
+            return origins.Length == 0 ? 
+                builder.AllowAnyOrigin() : 
+                builder.WithOrigins(origins);
         }
 
         public static IApplicationBuilder UseJwtBearerAuthenticationWithCustomJwtValidation(

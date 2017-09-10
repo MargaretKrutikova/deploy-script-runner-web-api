@@ -77,10 +77,11 @@ namespace DeployServiceWebApi
 
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
-            app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 
             try
             {
+                app.UseCorsFromOptions();
+
                 if (env.IsDevelopment())
                 {
                     app.UseDeveloperExceptionPage();
