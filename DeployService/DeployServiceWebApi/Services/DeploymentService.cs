@@ -97,9 +97,14 @@ namespace DeployServiceWebApi.Services
                 var errorMessage = $"Error running deployables: {ex.Message}";
                 _logger.LogError(errorMessage, ex);
 
-                _jobsDataAccess.SetFail(jobId, errorMessage);
+                // set fail if haven't already been set while running deployment scripts.
+                if (!_jobsDataAccess.CheckJobStatus(jobId, DeploymentJobStatus.FAIL))
+                {
+                    _jobsDataAccess.SetFail(jobId, ex.Message);
+                }
             }
         }
+        
         private void ExecuteScript(DeploymentScript script, string jobId)
         {
             var proc = new Process
@@ -119,24 +124,34 @@ namespace DeployServiceWebApi.Services
             _jobsDataAccess.SetInProgress(jobId, $"Running script {Path.GetFileName(script.Path)}", proc);
 
             // read output and error streams async
-            proc.OutputDataReceived += (sender, eventArgs) => LogIfNotEmpty(eventArgs.Data);
-            proc.ErrorDataReceived += (sender, eventArgs) => LogIfNotEmpty(eventArgs.Data, LogEventLevel.Error);
+            proc.OutputDataReceived += (sender, eventArgs) => LogIfNotEmpty(jobId, eventArgs.Data);
+            proc.ErrorDataReceived += (sender, eventArgs) => LogIfNotEmpty(jobId, eventArgs.Data, LogEventLevel.Error);
 
             proc.BeginOutputReadLine();
             proc.BeginErrorReadLine();
 
             proc.WaitForExit();
 
-            if (proc.ExitCode != 0)
+            // check if the job has failed during deployment.
+            if (proc.ExitCode != 0 || _jobsDataAccess.CheckJobStatus(jobId, DeploymentJobStatus.FAIL))
             {
                 var message = $"Error running script {Path.GetFileName(script.Path)}, exit code: {proc.ExitCode}";
                 throw new DeploymentException(message);
             }
         }
 
-        private void LogIfNotEmpty(string logMessage, LogEventLevel level = LogEventLevel.Information)
+        private void LogIfNotEmpty(
+            string jobId,
+            string logMessage,
+            LogEventLevel level = LogEventLevel.Information)
         {
             if (string.IsNullOrWhiteSpace(logMessage)) return;
+
+            // catch deployer-specific error messages when no error code is returned.
+            if (MessageHasDeploymentErrors(logMessage)) 
+            {
+                _jobsDataAccess.SetFail(jobId, "Deploy failed. Check logs for more information.");
+            }
 
             if (level == LogEventLevel.Error)
             {
@@ -145,6 +160,12 @@ namespace DeployServiceWebApi.Services
             }
 
             _logger.LogInformation(logMessage);
+        }
+
+        private bool MessageHasDeploymentErrors(string message)
+        {
+            var messageLowerCase = message.ToLower();
+            return messageLowerCase.Contains("deploy failed") || messageLowerCase.Contains("there were errors");
         }
     }
 }
