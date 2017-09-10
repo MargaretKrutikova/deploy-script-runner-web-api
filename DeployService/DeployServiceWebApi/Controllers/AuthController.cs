@@ -57,8 +57,6 @@ namespace DeployServiceWebApi.Controllers
             var creds = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(
-                issuer: _jwtOptions.Issuer,
-                audience: _jwtOptions.Audience,
                 claims: claims,
                 notBefore: now,
                 expires: now.AddMinutes(_jwtOptions.LifeTimeMinutes),

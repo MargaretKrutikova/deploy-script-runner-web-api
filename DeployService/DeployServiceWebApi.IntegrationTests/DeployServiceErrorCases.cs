@@ -89,10 +89,6 @@ namespace DeployServiceWebApi.IntegrationTests
                     {
                         options.DeploySettingsPath = settingsPath;
                     }
-                    if (checkoutScriptPath != null)
-                    {
-                        options.RepoUpdateScriptPath = checkoutScriptPath;
-                    }
                 })
             });
         }

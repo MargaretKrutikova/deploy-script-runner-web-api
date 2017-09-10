@@ -76,13 +76,9 @@ namespace DeployServiceWebApi
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = signingKey,
 
-                // Validate the JWT Issuer (iss) claim
-                ValidateIssuer = true,
-                ValidIssuer = jwtOptions.Value.Issuer,
+                ValidateIssuer = false,
 
-                // Validate the JWT Audience (aud) claim
-                ValidateAudience = true,
-                ValidAudience = jwtOptions.Value.Audience,
+                ValidateAudience = false,
 
                 // Validate the token expiry
                 ValidateLifetime = true,
