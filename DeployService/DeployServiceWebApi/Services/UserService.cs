@@ -12,7 +12,7 @@ namespace DeployServiceWebApi.Services
     {
         bool Authenticate(string username, string password);
     }
- 
+
     public class UserService : IUserService
     {
         private readonly byte[] _storedPasswordHash;
@@ -23,17 +23,17 @@ namespace DeployServiceWebApi.Services
             _storedUsername = options.Value.Username;
             _storedPasswordHash = Convert.FromBase64String(options.Value.PasswordHash);
         }
- 
+
         public bool Authenticate(string username, string password)
         {
             if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
                 return false;
- 
+
             return username == _storedUsername && VerifyPasswordHash(password, _storedPasswordHash);
         }
 
         private static bool VerifyPasswordHash(
-            string password, 
+            string password,
             byte[] passwordHash)
         {
             if (string.IsNullOrWhiteSpace(password)) throw new ArgumentException("Value cannot be empty string.", "password");
@@ -47,7 +47,7 @@ namespace DeployServiceWebApi.Services
                     if (computedHash[i] != passwordHash[i]) return false;
                 }
             }
- 
+
             return true;
         }
     }

@@ -2,7 +2,7 @@ using Newtonsoft.Json;
 
 public class ValidationError
 {
-    [JsonProperty(NullValueHandling=NullValueHandling.Ignore)]
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
     public string Field { get; }
 
     public string Message { get; }

@@ -21,7 +21,7 @@ namespace DeployServiceWebApi.IntegrationTests.TestBase
         protected static readonly string _authTokenEndpoint = $"{_apiPrefix}/auth/token";
         protected static readonly string _jobsEndpoint = $"{_apiPrefix}/jobs";
         protected static readonly string _settingsEndpoint = $"{_apiPrefix}/settings";
-        
+
         public DeployServiceWebApiTestBase()
         {
             _server = new TestServer(new WebHostBuilder().UseStartup<Startup>());
@@ -29,12 +29,12 @@ namespace DeployServiceWebApi.IntegrationTests.TestBase
             _client.BaseAddress = _baseAddress;
         }
 
-        public async Task<HttpResponseMessage> PostDataAsync(object data, string endPoint) 
+        public async Task<HttpResponseMessage> PostDataAsync(object data, string endPoint)
         {
             var jsonString = JsonConvert.SerializeObject(data);
-			var postContent = new StringContent(jsonString, _defaultEncoding, _postContentType);
+            var postContent = new StringContent(jsonString, _defaultEncoding, _postContentType);
 
-			var response = await _client.PostAsync(endPoint, postContent);
+            var response = await _client.PostAsync(endPoint, postContent);
             return response;
         }
 

@@ -5,15 +5,15 @@ using DeploymentSettings.Models;
 
 namespace DeploymentSettings
 {
-	public interface IDeploymentSettingsDataStore
-	{
-		ReadOnlyDictionary<string, ProjectDeploymentSettings> GetProjects();
+    public interface IDeploymentSettingsDataStore
+    {
+        ReadOnlyDictionary<string, ProjectDeploymentSettings> GetProjects();
 
-		bool TryGetDeployScripts(
-			string project,
-			string service,
-			out List<DeploymentScript> scripts);
+        bool TryGetDeployScripts(
+            string project,
+            string service,
+            out List<DeploymentScript> scripts);
 
-		void InitializeData(GlobalDeploymentSettingsJson settingsJson);
-	}
+        void InitializeData(GlobalDeploymentSettingsJson settingsJson);
+    }
 }

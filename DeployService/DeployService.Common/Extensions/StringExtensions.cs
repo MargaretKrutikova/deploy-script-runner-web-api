@@ -3,8 +3,8 @@ using System.Linq;
 
 namespace DeployService.Common.Extensions
 {
-	public static class StringExtensions
-	{
+    public static class StringExtensions
+    {
         public static string ToCamelCase(this string input)
         {
             if (string.IsNullOrWhiteSpace(input))
@@ -13,5 +13,5 @@ namespace DeployService.Common.Extensions
             }
             return $"{input.First().ToString().ToLower()}{input.Substring(1)}";
         }
-	}
+    }
 }

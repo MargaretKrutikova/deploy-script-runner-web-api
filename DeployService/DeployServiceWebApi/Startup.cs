@@ -20,11 +20,11 @@ using DeployService.Common.Exceptions;
 
 namespace DeployServiceWebApi
 {
-	public class Startup
+    public class Startup
     {
-	    private readonly IHostingEnvironment _env;
+        private readonly IHostingEnvironment _env;
 
-	    public Startup(IHostingEnvironment env)
+        public Startup(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
@@ -32,77 +32,77 @@ namespace DeployServiceWebApi
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
                 .AddEnvironmentVariables();
 
-	        _env = env;
+            _env = env;
             Configuration = builder.Build();
 
-			Log.Logger = new LoggerConfiguration()
-				.ReadFrom.Configuration(Configuration)
-		        .CreateLogger();
-		}
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(Configuration)
+                .CreateLogger();
+        }
 
         public IConfigurationRoot Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-			services.AddCors();
-			// Add framework services.
-			services.AddMvc(opt =>
-			{
-				if (!_env.IsProduction())
-				{
-					opt.SslPort = 44388;
-				}
-				opt.Filters.Add(new RequireHttpsAttribute());
-			});
+            services.AddCors();
+            // Add framework services.
+            services.AddMvc(opt =>
+            {
+                if (!_env.IsProduction())
+                {
+                    opt.SslPort = 44388;
+                }
+                opt.Filters.Add(new RequireHttpsAttribute());
+            });
 
-	        services.Configure<ConfigurationOptions>(Configuration);
-			services.Configure<JwtOptions>(options => Configuration.GetSection("JwtOptions").Bind(options));
-			services.Configure<CustomAuthorizationOptions>(options => Configuration.GetSection("AuthorizationOptions").Bind(options));
+            services.Configure<ConfigurationOptions>(Configuration);
+            services.Configure<JwtOptions>(options => Configuration.GetSection("JwtOptions").Bind(options));
+            services.Configure<CustomAuthorizationOptions>(options => Configuration.GetSection("AuthorizationOptions").Bind(options));
 
-	        services.TryAddScoped<IDeploymentService, DeploymentService>();
-			services.TryAddSingleton<IUserService, UserService>();
-			services.TryAddSingleton<IDeploymentSettingsDataStore, DeploymentSettingsDataStore>();
-	        services.TryAddSingleton<IDeploymentJobDataAccess, DeploymentJobDataAccess>();
-		}
+            services.TryAddScoped<IDeploymentService, DeploymentService>();
+            services.TryAddSingleton<IUserService, UserService>();
+            services.TryAddSingleton<IDeploymentSettingsDataStore, DeploymentSettingsDataStore>();
+            services.TryAddSingleton<IDeploymentJobDataAccess, DeploymentJobDataAccess>();
+        }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-	    public void Configure(
-			IApplicationBuilder app, 
-			IHostingEnvironment env, 
-			ILoggerFactory loggerFactory,
-			ILogger<Startup> logger)
-	    {
-		    loggerFactory.AddSerilog();
+        public void Configure(
+            IApplicationBuilder app,
+            IHostingEnvironment env,
+            ILoggerFactory loggerFactory,
+            ILogger<Startup> logger)
+        {
+            loggerFactory.AddSerilog();
 
-			loggerFactory.AddConsole(Configuration.GetSection("Logging"));
-		    loggerFactory.AddDebug();
-			app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
-				
-			try
-		    {
-			    if (env.IsDevelopment())
-			    {
-				    app.UseDeveloperExceptionPage();
-			    }
+            loggerFactory.AddConsole(Configuration.GetSection("Logging"));
+            loggerFactory.AddDebug();
+            app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 
-				app.UseExceptionHandlingMiddleware();	
+            try
+            {
+                if (env.IsDevelopment())
+                {
+                    app.UseDeveloperExceptionPage();
+                }
 
-				app.UseDeploymentSettingsDataInitializer();
-				
-				app.UseJwtBearerAuthenticationWithCustomJwtValidation();
-				app.UseMvc();
-			}
-		    catch (Exception exception)
-		    {
-			    logger.LogError("Startup error occured.", exception);
+                app.UseExceptionHandlingMiddleware();
 
-				if (env.IsDevelopment()) throw;
+                app.UseDeploymentSettingsDataInitializer();
 
-			    // app.Run terminates the pipeline.
-			    app.Run(context => throw new StartupException("An error occurred while starting the application.",
-				    exception));
-		    }
-	    }
+                app.UseJwtBearerAuthenticationWithCustomJwtValidation();
+                app.UseMvc();
+            }
+            catch (Exception exception)
+            {
+                logger.LogError("Startup error occured.", exception);
+
+                if (env.IsDevelopment()) throw;
+
+                // app.Run terminates the pipeline.
+                app.Run(context => throw new StartupException("An error occurred while starting the application.",
+                    exception));
+            }
+        }
     }
 }

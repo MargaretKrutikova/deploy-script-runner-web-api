@@ -8,7 +8,7 @@ namespace DeployServiceWebApi
     {
         public static void Main(string[] args)
         {
-            var config = new ConfigurationBuilder()  
+            var config = new ConfigurationBuilder()
                 .AddCommandLine(args)
                 .Build();
 
@@ -19,7 +19,7 @@ namespace DeployServiceWebApi
                 .UseIISIntegration()
                 .UseStartup<Startup>()
                 .UseApplicationInsights()
-				.CaptureStartupErrors(true)
+                .CaptureStartupErrors(true)
                 .Build();
 
             host.Run();

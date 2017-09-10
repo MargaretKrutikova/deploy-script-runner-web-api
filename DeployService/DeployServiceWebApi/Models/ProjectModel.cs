@@ -5,7 +5,6 @@ namespace DeployServiceWebApi.Models
     public class ProjectModel
     {
         public string Name { get; set; }
-
         public ServiceModel[] Services { get; set; }
     }
 

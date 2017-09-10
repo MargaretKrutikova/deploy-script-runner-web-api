@@ -7,6 +7,9 @@ tasks.json
 *.user
 *.sln.docstates
 
+#vs code settings
+**/.vscode/settings.json
+
 # Build results
 
 [Dd]ebug/

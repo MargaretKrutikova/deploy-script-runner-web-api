@@ -10,41 +10,41 @@ namespace DeployServiceWebApi.IntegrationTests.TestBase
     {
         public string AuthToken { get; private set; }
 
-        public AuthTokenWebApiFixture() 
+        public AuthTokenWebApiFixture()
         {
             this.GetOrCreateAuthToken().Wait();
         }
 
-        public async Task GetOrCreateAuthToken() 
+        public async Task GetOrCreateAuthToken()
         {
             if (AuthToken != null) return;
 
-			var jsonString = JsonConvert.SerializeObject(new { userName = "testUser", password = "testPassword"});
+            var jsonString = JsonConvert.SerializeObject(new { userName = "testUser", password = "testPassword" });
             var postContent = new StringContent(jsonString, _defaultEncoding, _postContentType);
 
-			var response = await _client.PostAsync(_authTokenEndpoint, postContent);
+            var response = await _client.PostAsync(_authTokenEndpoint, postContent);
 
-			response.EnsureSuccessStatusCode();
+            response.EnsureSuccessStatusCode();
 
-			var responseBody = await response.Content.ReadAsStringAsync();
-			AuthToken = JsonConvert.DeserializeObject<dynamic>(responseBody).token;
-            _client.DefaultRequestHeaders.Add("Authorization", new []{$"bearer {AuthToken}"});
+            var responseBody = await response.Content.ReadAsStringAsync();
+            AuthToken = JsonConvert.DeserializeObject<dynamic>(responseBody).token;
+            _client.DefaultRequestHeaders.Add("Authorization", new[] { $"bearer {AuthToken}" });
         }
     }
-    public class AuthTokenWebApiTestBase : 
-        DeployServiceWebApiTestBase, 
+    public class AuthTokenWebApiTestBase :
+        DeployServiceWebApiTestBase,
         Xunit.IClassFixture<AuthTokenWebApiFixture>
     {
         private AuthTokenWebApiFixture fixture;
 
-        public AuthTokenWebApiTestBase(AuthTokenWebApiFixture fixture) 
+        public AuthTokenWebApiTestBase(AuthTokenWebApiFixture fixture)
         {
             this.fixture = fixture;
             SetAuthTokenHeader(_client);
         }
-        protected void SetAuthTokenHeader(HttpClient client) 
+        protected void SetAuthTokenHeader(HttpClient client)
         {
-            client.DefaultRequestHeaders.Add("Authorization", new []{$"bearer {fixture.AuthToken}"});
+            client.DefaultRequestHeaders.Add("Authorization", new[] { $"bearer {fixture.AuthToken}" });
         }
     }
 }
