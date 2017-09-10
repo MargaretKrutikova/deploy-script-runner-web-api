@@ -29,7 +29,6 @@ namespace DeployServiceWebApi.Services
     {
         private readonly ILogger<DeploymentService> _logger;
         private readonly IDeploymentJobDataAccess _jobsDataAccess;
-        //private const string SvnCheckoutFlags = "--non-interactive --trust-server-cert --no-auth-cache";
 
         public DeploymentService(
             ILogger<DeploymentService> logger,

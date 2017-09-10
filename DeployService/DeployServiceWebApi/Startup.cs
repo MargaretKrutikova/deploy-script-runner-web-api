@@ -17,6 +17,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.Extensions.Options;
 using DeployService.Common.Exceptions;
+using DeployService.Common.Options;
 
 namespace DeployServiceWebApi
 {
@@ -57,6 +58,7 @@ namespace DeployServiceWebApi
             });
 
             services.Configure<ConfigurationOptions>(Configuration);
+            services.Configure<DeploymentJobsCleanerOptions>(Configuration);
             services.Configure<JwtOptions>(options => Configuration.GetSection("JwtOptions").Bind(options));
             services.Configure<CustomAuthorizationOptions>(options => Configuration.GetSection("AuthorizationOptions").Bind(options));
 
@@ -64,6 +66,7 @@ namespace DeployServiceWebApi
             services.TryAddSingleton<IUserService, UserService>();
             services.TryAddSingleton<IDeploymentSettingsDataStore, DeploymentSettingsDataStore>();
             services.TryAddSingleton<IDeploymentJobDataAccess, DeploymentJobDataAccess>();
+            services.TryAddSingleton<IDeploymentJobsCleaner, DeploymentJobsCleaner>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -71,7 +74,8 @@ namespace DeployServiceWebApi
             IApplicationBuilder app,
             IHostingEnvironment env,
             ILoggerFactory loggerFactory,
-            ILogger<Startup> logger)
+            ILogger<Startup> logger,
+            IDeploymentJobsCleaner jobsCleaner)
         {
             loggerFactory.AddSerilog();
 
@@ -93,6 +97,8 @@ namespace DeployServiceWebApi
 
                 app.UseJwtBearerAuthenticationWithCustomJwtValidation();
                 app.UseMvc();
+
+                jobsCleaner.Start();
             }
             catch (Exception exception)
             {

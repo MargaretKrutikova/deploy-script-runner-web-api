@@ -46,8 +46,8 @@ namespace DeployServiceWebApi.Controllers
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, model.UserName),
-				// jti - string that claims uniqueness for the current jwt
-				new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                // jti - string that claims uniqueness for the current jwt
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
             var now = DateTime.UtcNow;
