@@ -26,7 +26,7 @@ namespace DeploymentSettings
                                         service.Value.DisplayText,
                                         service.Value.Scripts.Select(
                                             script => new DeploymentScript(
-                                                Path.Combine(project.Value.ServiceScriptsRootPath, script.Path),
+                                                Path.Combine(project.Value.ServiceScriptsRootPath ?? "", script.Path),
                                                 script.Arguments))
                                                             .ToList())),
                     project.Value.ServiceScriptsRootPath
