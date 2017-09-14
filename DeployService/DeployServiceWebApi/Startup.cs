@@ -48,14 +48,16 @@ namespace DeployServiceWebApi
         {
             services.AddCors();
             // Add framework services.
-            services.AddMvc(opt =>
+            services.AddMvc();
+            // TODO: this didnt work on the server, investigate why.
+            /*(opt =>
             {
                 if (!_env.IsProduction())
                 {
                     opt.SslPort = 44388;
                 }
                 opt.Filters.Add(new RequireHttpsAttribute());
-            });
+            });*/
 
             services.Configure<ConfigurationOptions>(Configuration);
             services.Configure<DeploymentJobsCleanerOptions>(Configuration);
