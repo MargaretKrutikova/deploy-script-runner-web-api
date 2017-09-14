@@ -66,6 +66,7 @@ namespace DeployServiceWebApi
 
             services.TryAddScoped<IDeploymentService, DeploymentService>();
             services.TryAddSingleton<IUserService, UserService>();
+            services.TryAddSingleton<IDeploymentSettingsDataService, DeploymentSettingsDataService>();
             services.TryAddSingleton<IDeploymentSettingsDataStore, DeploymentSettingsDataStore>();
             services.TryAddSingleton<IDeploymentJobDataAccess, DeploymentJobDataAccess>();
             services.TryAddSingleton<IDeploymentJobsCleaner, DeploymentJobsCleaner>();

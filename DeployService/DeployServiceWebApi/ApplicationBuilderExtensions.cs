@@ -5,6 +5,7 @@ using DeploymentSettings;
 using DeploymentSettings.Json;
 using DeployServiceWebApi.Exceptions;
 using DeployServiceWebApi.Options;
+using DeployServiceWebApi.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,21 +20,8 @@ namespace DeployServiceWebApi
     {
         public static void UseDeploymentSettingsDataInitializer(this IApplicationBuilder app)
         {
-            var dataStoreService = app.ApplicationServices.GetRequiredService<IDeploymentSettingsDataStore>();
-
-            var configOptions = app.ApplicationServices.GetRequiredService<IOptions<ConfigurationOptions>>();
-            var settingsPath = configOptions.Value.DeploySettingsPath;
-
-            var jsonSerializerSettings = new JsonSerializerSettings
-            {
-                ContractResolver = new CamelCasePropertyNamesContractResolver(),
-                NullValueHandling = NullValueHandling.Ignore // ignore null values
-            };
-
-            var settingsString = File.ReadAllText(settingsPath);
-            var settingsJson = JsonConvert.DeserializeObject<GlobalDeploymentSettingsJson>(settingsString, jsonSerializerSettings);
-
-            dataStoreService.InitializeData(settingsJson);
+            var dataStoreService = app.ApplicationServices.GetRequiredService<IDeploymentSettingsDataService>();
+            dataStoreService.ReloadDeploymentSettingsFromFile();
         }
 
         public static IApplicationBuilder UseExceptionHandlingMiddleware(

@@ -14,6 +14,6 @@ namespace DeploymentSettings
             string service,
             out List<DeploymentScript> scripts);
 
-        void InitializeData(GlobalDeploymentSettingsJson settingsJson);
+        void SetGlobalDeploymentSettings(GlobalDeploymentSettingsJson settingsJson);
     }
 }

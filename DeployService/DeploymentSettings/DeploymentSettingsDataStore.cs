@@ -12,27 +12,35 @@ namespace DeploymentSettings
     {
         private GlobalDeploymentSettings _deploymentSettings;
 
-        public void InitializeData(GlobalDeploymentSettingsJson settingsJson)
+        private readonly object _lockObject = new object();
+
+        public void SetGlobalDeploymentSettings(GlobalDeploymentSettingsJson settingsJson)
         {
-            if (_deploymentSettings != null)
+            lock (_lockObject) 
             {
-                throw new InvalidOperationException("Data has already been initialized");
+                var projectSettingsDictionary = settingsJson.Projects.ToDictionary(project => project.Key, project =>
+                    new ProjectDeploymentSettings(
+                        ConvertJsonDeploymentScripts(project.Value.Scripts), // project scripts
+
+                        project.Value.Services.ToDictionary(service => service.Key, service => 
+                            new ServiceDeploymentSettings(
+                                service.Value.DisplayText, 
+                                ConvertJsonDeploymentScripts(service.Value.Scripts) // service scripts
+                            )),
+
+                        project.Value.ServiceScriptsRootPath
+                    ));
+
+                _deploymentSettings = new GlobalDeploymentSettings(projectSettingsDictionary);
             }
+        }
 
-            var projectSettingsDictionary = settingsJson.Projects.ToDictionary(project => project.Key, project =>
-                new ProjectDeploymentSettings(
-                    project.Value.Scripts?.Select(script => new DeploymentScript(script.Path, script.Arguments)).ToList(),
-                    project.Value.Services.ToDictionary(service => service.Key, service => new ServiceDeploymentSettings(
-                                        service.Value.DisplayText,
-                                        service.Value.Scripts.Select(
-                                            script => new DeploymentScript(
-                                                Path.Combine(project.Value.ServiceScriptsRootPath ?? "", script.Path),
-                                                script.Arguments))
-                                                            .ToList())),
-                    project.Value.ServiceScriptsRootPath
-                ));
-
-            _deploymentSettings = new GlobalDeploymentSettings(projectSettingsDictionary);
+        private List<DeploymentScript> ConvertJsonDeploymentScripts(DeploymentScriptJson[] scripts, string rootPath = "") 
+        {
+            return scripts?.Select(script => new DeploymentScript(
+                    Path.Combine(rootPath, script.Path), 
+                    script.Arguments))
+                .ToList();
         }
 
         public bool TryGetDeployScripts(
@@ -40,26 +48,32 @@ namespace DeploymentSettings
             string service,
             out List<DeploymentScript> scripts)
         {
-            if (!_deploymentSettings.Projects.TryGetValue(project, out ProjectDeploymentSettings projectSettings) ||
-                !projectSettings.Services.TryGetValue(service, out ServiceDeploymentSettings serviceSettings))
+            lock (_lockObject) 
             {
-                scripts = null;
-                return false;
-            }
+                if (!_deploymentSettings.Projects.TryGetValue(project, out ProjectDeploymentSettings projectSettings) ||
+                    !projectSettings.Services.TryGetValue(service, out ServiceDeploymentSettings serviceSettings))
+                {
+                    scripts = null;
+                    return false;
+                }
 
-            scripts = new List<DeploymentScript>();
+                scripts = new List<DeploymentScript>();
 
-            if (projectSettings.Scripts != null)
-            {
-                scripts.AddRange(projectSettings.Scripts);
+                if (projectSettings.Scripts != null)
+                {
+                    scripts.AddRange(projectSettings.Scripts);
+                }
+                scripts.AddRange(serviceSettings.Scripts);
+                return true;
             }
-            scripts.AddRange(serviceSettings.Scripts);
-            return true;
         }
 
         public ReadOnlyDictionary<string, ProjectDeploymentSettings> GetProjects()
         {
-            return _deploymentSettings.Projects;
+            lock (_lockObject) 
+            {
+                return _deploymentSettings.Projects;
+            }
         }
     }
 }
