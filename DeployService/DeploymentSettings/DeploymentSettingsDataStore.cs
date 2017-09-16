@@ -25,7 +25,7 @@ namespace DeploymentSettings
                         project.Value.Services.ToDictionary(service => service.Key, service => 
                             new ServiceDeploymentSettings(
                                 service.Value.DisplayText, 
-                                ConvertJsonDeploymentScripts(service.Value.Scripts) // service scripts
+                                ConvertJsonDeploymentScripts(service.Value.Scripts, project.Value.ServiceScriptsRootPath ?? "") // service scripts
                             )),
 
                         project.Value.ServiceScriptsRootPath
