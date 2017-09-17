@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -49,13 +51,15 @@ namespace DeployServiceWebApi
                 builder.WithOrigins(origins);
         }
 
-        public static IApplicationBuilder UseJwtBearerAuthenticationWithCustomJwtValidation(
-            this IApplicationBuilder app)
+        public static void AddJwtBearerAuthentication(
+            this IServiceCollection services, 
+            IConfigurationRoot configuration)
         {
-            var jwtOptions = app.ApplicationServices.GetRequiredService<IOptions<JwtOptions>>();
+            var jwtOptions = new JwtOptions();
+            configuration.Bind("JwtOptions", jwtOptions);
 
             // secretKey contains a secret passphrase only your server knows
-            var signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtOptions.Value.SignatureKey));
+            var signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtOptions.SignatureKey));
 
             // information that is used to validate the token
             var tokenValidationParameters = new TokenValidationParameters
@@ -75,12 +79,15 @@ namespace DeployServiceWebApi
                 ClockSkew = TimeSpan.Zero
             };
 
-            return app.UseJwtBearerAuthentication(new JwtBearerOptions
-            {
-                AutomaticAuthenticate = true,
-                AutomaticChallenge = true,
-                TokenValidationParameters = tokenValidationParameters
-            });
+            services.AddAuthentication(options =>
+                {
+                    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+                })
+                .AddJwtBearer(options =>
+                {
+                    options.SaveToken = true;
+                    options.TokenValidationParameters = tokenValidationParameters;
+                });
         }
     }
 }

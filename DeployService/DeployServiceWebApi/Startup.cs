@@ -1,23 +1,23 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using DeploymentJobs.DataAccess;
 using DeploymentSettings;
 using DeployServiceWebApi.Exceptions;
 using DeployServiceWebApi.Options;
 using DeployServiceWebApi.Services;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Logging;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Serilog;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Microsoft.Extensions.Options;
 using DeployService.Common.Exceptions;
 using DeployService.Common.Options;
+using Serilog;
 
 namespace DeployServiceWebApi
 {
@@ -59,6 +59,8 @@ namespace DeployServiceWebApi
                 opt.Filters.Add(new RequireHttpsAttribute());
             });*/
 
+            services.AddJwtBearerAuthentication(Configuration);
+
             services.Configure<ConfigurationOptions>(Configuration);
             services.Configure<DeploymentJobsCleanerOptions>(Configuration);
             services.Configure<JwtOptions>(options => Configuration.GetSection("JwtOptions").Bind(options));
@@ -98,7 +100,7 @@ namespace DeployServiceWebApi
 
                 app.UseDeploymentSettingsDataInitializer();
 
-                app.UseJwtBearerAuthenticationWithCustomJwtValidation();
+                app.UseAuthentication();
                 app.UseMvc();
 
                 jobsCleaner.Start();
