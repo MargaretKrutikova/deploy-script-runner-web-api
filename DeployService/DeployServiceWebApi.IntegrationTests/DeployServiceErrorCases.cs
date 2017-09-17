@@ -43,8 +43,8 @@ namespace DeployServiceWebApi.IntegrationTests
                 .UseEnvironment("Production")
                 .ConfigureServices(services =>
                 {
-                    services.AddSingleton(
-                        serviceProvider => new OptionsManager<ConfigurationOptions>(new FakeOptionsFactory()));
+                    services.AddSingleton(serviceProvider => 
+                        CreateFakeConfigurationOptions(serviceProvider, "non-existing-path/empty.json"));
                 })
                 .UseStartup<Startup>();
 
@@ -77,11 +77,24 @@ namespace DeployServiceWebApi.IntegrationTests
             Assert.Equal("ProjectOrServiceNotFound", jsonResponse.Title);
         }
 
+        private IOptions<ConfigurationOptions> CreateFakeConfigurationOptions(
+            IServiceProvider provider,
+            string settingsPath)
+        {
+           return new OptionsManager<ConfigurationOptions>(new FakeOptionsFactory(settingsPath));
+        }
+
         public class FakeOptionsFactory : IOptionsFactory<ConfigurationOptions>
         {
+            private readonly string _settingsPath;
+
+            public FakeOptionsFactory(string settingsPath)
+            {
+                _settingsPath = settingsPath;
+            }
             public ConfigurationOptions Create(string name) 
             {
-                return (new ConfigurationOptions { DeploySettingsPath = "non-existing-path/empty.json" });
+                return (new ConfigurationOptions { DeploySettingsPath = _settingsPath });
             }
         }
     }

@@ -57,8 +57,7 @@ namespace DeployServiceWebApi.Services
             List<DeploymentScript> scripts,
             out DeploymentJob job)
         {
-            job = _jobsDataAccess.GetOrCreate(project, service);
-            if (job.Status == DeploymentJobStatus.IN_PROGRESS)
+            if (!_jobsDataAccess.TryCreateIfVacant(project, service, out job))
             {
                 return false;
             }

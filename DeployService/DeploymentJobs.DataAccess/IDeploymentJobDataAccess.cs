@@ -7,7 +7,7 @@ namespace DeploymentJobs.DataAccess
     {
         IEnumerable<DeploymentJob> GetCurrentJobs();
         void CancelJob(string jobId);
-        DeploymentJob GetOrCreate(string project, string Service);
+        bool TryCreateIfVacant(string project, string service, out DeploymentJob newJob);
         bool TryGetJob(string jobId, out DeploymentJob job);
         bool CheckJobStatus(string jobId, DeploymentJobStatus statusToCheck);
         DeploymentJob GetJob(string jobId);

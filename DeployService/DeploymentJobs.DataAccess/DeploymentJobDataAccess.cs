@@ -23,23 +23,25 @@ namespace DeploymentJobs.DataAccess
             return _deploymentJobsDictionary.Values;
         }
 
-        public DeploymentJob GetOrCreate(
-            string project,
-            string service)
+        public bool TryCreateIfVacant(string project, string service, out DeploymentJob newJob)
         {
             lock (_lockObject)
             {
                 var jobInProgress = _deploymentJobsDictionary.Values.FirstOrDefault(
                     j => j.Project == project &&
                          j.Service == service &&
-                         j.Status == DeploymentJobStatus.IN_PROGRESS);
+                         !j.IsCompleted());
 
-                if (jobInProgress != null) return jobInProgress;
+                if (jobInProgress != null) 
+                {
+                    newJob = null;
+                    return false;
+                }
 
-                var newJob = new DeploymentJob(GenerateUid(), project, service);
+                newJob = new DeploymentJob(GenerateUid(), project, service);
                 _deploymentJobsDictionary.Add(newJob.Id, newJob);
 
-                return newJob;
+                return true;
             }
         }
 
