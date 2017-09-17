@@ -1,25 +1,15 @@
 {
-  "projects" : { 
-    /* example of a project for running deployment scripts */
+  "projects" : {
     "example-project-deployment": {
-      /* 
-       when deploying a service from this project, the project's root scripts
-       will run before the service's own scripts.
-      */
       "scripts": [{
         "path": "..\\tools\\checkout_svn.bat",
         "arguments": "\"https://svn.url.com/deploy-scripts/trunk\" \"D:\\projects\\deploy-scripts\\example-project\""
       }],
-      /*
-        root path is optional, can be used if services' scripts are located in the 
-        same subdirectory. The value will be concatenated with services' scripts paths.
-      */
       "serviceScriptsRootPath": "D:\\projects\\deploy-scripts\\example-project",
 
       "services": {
         "wip" : {
           "displayText": "wip example services",
-          /* A service can have multiple scripts which can be specified with arguments */
           "scripts": [{"path": "wip1.bat"}, {"path": "wip2.bat"}]
         },
         "stage": {
@@ -32,7 +22,6 @@
         }
       }
     },
-    /* example of a project for running general-purpose scripts */
     "run-cleanup" : {
       "services": {
         "image-cache-cleanup" : {
