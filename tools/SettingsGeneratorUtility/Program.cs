@@ -2,7 +2,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace ProductionSettingsTool
+namespace SettingsGeneratorUtility
 {
     class Program
     {
@@ -29,7 +29,7 @@ namespace ProductionSettingsTool
             Console.WriteLine("\nSigning key:");
             Console.WriteLine(key);
 
-            Console.ReadKey();
+            Console.Read();
         }
     }
 }
