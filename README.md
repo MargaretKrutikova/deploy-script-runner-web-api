@@ -2,7 +2,7 @@
 
 This project is an ASP.NET Core web api that can be used for running any kinds of scripts located on the same machine with the api. The initial purpose of the project was to run deployment scripts to facilitate updating of web services on remote machines. The api can however be used to run general-purpose scripts like setting watchdog flags, performing some cleanup on the servers (e.g. clearing cache), updating some statuses etc.
 
-The api is RESTful except for a few functional api methods for reloading configuration from the settings file. The implementation utilizes the concept of long running jobs to represent running scripts as API resources manipulated via URIs. The api is secured with [JSON web tokens](https://jwt.io/introduction/).
+The api is RESTful except for a few functional api methods for reloading configuration from the settings file. The implementation utilizes the concept of long running jobs to represent running scripts as API resources manipulated via URIs. The api is secured with [JSON web tokens](https://jwt.io/introduction/). There is a swagger documentation available for the api, see [swagger section](#swagger).
 
 There is also a command line utility that helps to generate settings for `appsettings.json` and can be used for production settings when deploying the api live.
 
@@ -48,6 +48,20 @@ dotnet run
 Enter password for the authorized user of the api and the utility will output hash of the password and will generate a key that can be used for signing JWTs.
 
 For more information on settings see section [configuration](#configuration).
+
+### Swagger
+
+In order to acces the api swagger documentation, setup and run the api locally first. The json documentation is available at
+http://localhost:5000/swagger/v1/swagger.json and the swagger UI at http://localhost:5000/swagger/.
+
+In order to access protected endpoints, authorization bearer should be sent in the header:
+1. Call `/api/auth/token` with the right credentials. Enter username and password that are setup locally in the `appsettings.json`. If the template configuration in the `appsettings.json` hasn't been changed, enter `testUser` as username
+and `testPassword` as password.
+2. In the response body copy the value of the field `token`.
+3. Click on the `Authorize` button in the right upper corner of the page.
+4. In the field `api_key` enter `Bearer ` and paste the copied token.
+*NOTE: it won't work with just the token without the string `Bearer `.*
+5. Test the authorization by for example calling GET on `/api/jobs` and make sure you receive status 200.
 
 ## Deployment
 

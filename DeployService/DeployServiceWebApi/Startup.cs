@@ -18,6 +18,8 @@ using DeployServiceWebApi.Services;
 using DeployService.Common.Exceptions;
 using DeployService.Common.Options;
 using Serilog;
+using Swashbuckle.AspNetCore;
+using Swashbuckle.AspNetCore.Swagger;
 
 namespace DeployServiceWebApi
 {
@@ -60,6 +62,18 @@ namespace DeployServiceWebApi
             });*/
 
             services.AddJwtBearerAuthentication(Configuration);
+            services.AddSwaggerGen(c =>
+            {
+                // jwt is required to be sent in the header for most of the endpoints.
+                c.AddSecurityDefinition("Bearer", new ApiKeyScheme() { 
+                    In = "header", 
+                    Description = "JWT Authorization header using bearer. Example: \"Authorization: Bearer {token}\"",
+                    Name = "Authorization", 
+                    Type = "apiKey" 
+                });
+                c.SwaggerDoc("v1", new Info { Title = "Deploy Service Web API", Version = "v1" });
+                c.DescribeAllEnumsAsStrings();
+            });
 
             services.Configure<ConfigurationOptions>(Configuration);
             services.Configure<DeploymentJobsCleanerOptions>(Configuration);
@@ -87,6 +101,15 @@ namespace DeployServiceWebApi
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
+            app.UseStaticFiles();
+            // Enable middleware to serve generated Swagger as a JSON endpoint.
+            app.UseSwagger();
+            // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.), specifying the Swagger JSON endpoint.
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Deploy Service Web API V1");
+            });
+
             try
             {
                 app.UseCorsFromOptions();
@@ -97,9 +120,7 @@ namespace DeployServiceWebApi
                 }
 
                 app.UseExceptionHandlingMiddleware();
-
                 app.UseDeploymentSettingsDataInitializer();
-
                 app.UseAuthentication();
                 app.UseMvc();
 
