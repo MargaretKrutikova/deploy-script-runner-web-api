@@ -62,7 +62,8 @@ namespace DeployServiceWebApi.Services
                 return false;
             }
 
-            Task.Run(() => RunJob(job.Id, scripts));
+            var jobId = job.Id;
+            Task.Run(() => RunJob(jobId, scripts));
 
             return true;
         }
