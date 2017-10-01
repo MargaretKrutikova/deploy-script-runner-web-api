@@ -8,12 +8,7 @@ namespace DeploymentSettings
     public interface IDeploymentSettingsDataStore
     {
         ReadOnlyDictionary<string, ProjectDeploymentSettings> GetProjects();
-
-        bool TryGetDeployScripts(
-            string project,
-            string service,
-            out List<DeploymentScript> scripts);
-
+        bool TryGetServiceSettings(string project, string service, out ServiceSettings settings);
         void SetGlobalDeploymentSettings(GlobalDeploymentSettingsJson settingsJson);
     }
 }

@@ -20,6 +20,7 @@ using DeployService.Common.Options;
 using Serilog;
 using Swashbuckle.AspNetCore;
 using Swashbuckle.AspNetCore.Swagger;
+using DeploymentJobs.DataAccess.Queues;
 
 namespace DeployServiceWebApi
 {
@@ -86,6 +87,7 @@ namespace DeployServiceWebApi
             services.TryAddSingleton<IDeploymentSettingsDataStore, DeploymentSettingsDataStore>();
             services.TryAddSingleton<IDeploymentJobDataAccess, DeploymentJobDataAccess>();
             services.TryAddSingleton<IDeploymentJobsCleaner, DeploymentJobsCleaner>();
+            services.TryAddSingleton<IDeploymentJobQueues, DeploymentJobQueues>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -43,27 +43,24 @@ namespace DeploymentSettings
                 .ToList();
         }
 
-        public bool TryGetDeployScripts(
+        public bool TryGetServiceSettings(
             string project,
             string service,
-            out List<DeploymentScript> scripts)
+            out ServiceSettings settings)
         {
             lock (_lockObject) 
             {
                 if (!_deploymentSettings.Projects.TryGetValue(project, out ProjectDeploymentSettings projectSettings) ||
                     !projectSettings.Services.TryGetValue(service, out ServiceDeploymentSettings serviceSettings))
                 {
-                    scripts = null;
+                    settings = null;
                     return false;
                 }
 
-                scripts = new List<DeploymentScript>();
-
-                if (projectSettings.Scripts != null)
-                {
-                    scripts.AddRange(projectSettings.Scripts);
-                }
+                var scripts = projectSettings.Scripts?.ToList() ?? new List<DeploymentScript>();
                 scripts.AddRange(serviceSettings.Scripts);
+
+                settings = new ServiceSettings(project, service, scripts);
                 return true;
             }
         }
