@@ -7,8 +7,8 @@ namespace DeploymentSettings
 {
     public interface IDeploymentSettingsDataStore
     {
-        ReadOnlyDictionary<string, ProjectDeploymentSettings> GetProjects();
-        bool TryGetServiceSettings(string project, string service, out ServiceSettings settings);
+        ReadOnlyDictionary<string, GroupDeploymentSettings> GetGroups();
+        bool TryGetServiceSettings(string group, string service, out ServiceSettings settings);
         void SetGlobalDeploymentSettings(GlobalDeploymentSettingsJson settingsJson);
     }
 }

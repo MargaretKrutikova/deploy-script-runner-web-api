@@ -6,8 +6,8 @@ namespace DeploymentJobs.DataAccess
     public class DeploymentJob
     {
         public string Id { get; }
-        public string Project { get; } // e.g. vds, sds, some-other-ds
-        public string Service { get; } // defined within a project, e.g. stage, wip, live etc.
+        public string Group { get; } // e.g. vds, sds, some-other-ds
+        public string Service { get; } // defined within a group, e.g. stage, wip, live etc.
         public DeploymentJobStatus Status { get; }
         public string CurrentAction { get; }
         public string ErrorMessage { get; }
@@ -15,10 +15,10 @@ namespace DeploymentJobs.DataAccess
         public DateTime? EndTime { get; }
         public Process CurrentProcess { get; }
 
-        public DeploymentJob(string id, string project, string service)
+        public DeploymentJob(string id, string group, string service)
         {
             Id = id;
-            Project = project;
+            Group = group;
             Service = service;
             Status = DeploymentJobStatus.NOT_STARTED;
             CreatedTime = DateTime.Now;
@@ -26,7 +26,7 @@ namespace DeploymentJobs.DataAccess
 
         private DeploymentJob(
             string id,
-            string project,
+            string group,
             string service,
             DeploymentJobStatus status,
               string currentAction,
@@ -36,7 +36,7 @@ namespace DeploymentJobs.DataAccess
               Process currentProcess = null)
         {
             Id = id;
-            Project = project;
+            Group = group;
             Service = service;
             Status = status;
             CurrentAction = currentAction;
@@ -50,7 +50,7 @@ namespace DeploymentJobs.DataAccess
         {
             return new DeploymentJob(
                 this.Id,
-                this.Project,
+                this.Group,
                 this.Service,
                 DeploymentJobStatus.FAIL,
                 this.CurrentAction,
@@ -63,7 +63,7 @@ namespace DeploymentJobs.DataAccess
         {
             return new DeploymentJob(
                 this.Id,
-                this.Project,
+                this.Group,
                 this.Service,
                 DeploymentJobStatus.SUCCESS,
                 this.CurrentAction,
@@ -78,7 +78,7 @@ namespace DeploymentJobs.DataAccess
         {
             return new DeploymentJob(
                 this.Id,
-                this.Project,
+                this.Group,
                 this.Service,
                 DeploymentJobStatus.IN_PROGRESS,
                 currentAction,
@@ -92,7 +92,7 @@ namespace DeploymentJobs.DataAccess
         {
             return new DeploymentJob(
                 this.Id,
-                this.Project,
+                this.Group,
                 this.Service,
                 DeploymentJobStatus.CANCELLED,
                 this.CurrentAction,

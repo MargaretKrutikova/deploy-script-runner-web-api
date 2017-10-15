@@ -48,7 +48,7 @@ namespace DeployServiceWebApi.Services
 
                 _deploymentSettingsDataStore.SetGlobalDeploymentSettings(settingsJson);
 
-                _jobQueues.InitializeAndRunJobQueues(settingsJson.Projects.Keys);
+                _jobQueues.InitializeAndRunJobQueues(settingsJson.Groups.Keys);
             }
             catch (Exception exception) 
             {
@@ -59,10 +59,10 @@ namespace DeployServiceWebApi.Services
             }
         }
 
-        public ProjectModel[] GetProjectsModel()
+        public GroupModel[] GetGroupsModel()
         {
-            var projects = _deploymentSettingsDataStore.GetProjects().Select(p =>
-                new ProjectModel
+            var groups = _deploymentSettingsDataStore.GetGroups().Select(p =>
+                new GroupModel
                 {
                     Name = p.Key,
                     Services = p.Value.Services.Select(s => new ServiceModel
@@ -72,7 +72,7 @@ namespace DeployServiceWebApi.Services
                     }).ToArray()
                 }).ToArray();
 
-            return projects;
+            return groups;
         }
     }
 }

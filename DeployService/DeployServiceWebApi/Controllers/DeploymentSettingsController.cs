@@ -49,10 +49,10 @@ namespace DeployServiceWebApi.Controllers
             return Ok();
         }
 
-        [HttpGet("projects")]
-        public IActionResult GetProjects()
+        [HttpGet("groups")]
+        public IActionResult GetGroups()
         {
-            return Ok(_deploymentSettingsService.GetProjectsModel());
+            return Ok(_deploymentSettingsService.GetGroupsModel());
         }
     }
 }

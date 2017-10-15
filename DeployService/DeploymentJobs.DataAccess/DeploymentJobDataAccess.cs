@@ -23,11 +23,11 @@ namespace DeploymentJobs.DataAccess
             return _deploymentJobsDictionary.Values;
         }
 
-        public DeploymentJob CreateJob(string project, string service)
+        public DeploymentJob CreateJob(string group, string service)
         {
             lock (_lockObject)
             {
-                var newJob = new DeploymentJob(GenerateUid(), project, service);
+                var newJob = new DeploymentJob(GenerateUid(), group, service);
                 _deploymentJobsDictionary.Add(newJob.Id, newJob);
 
                 return newJob;
@@ -142,10 +142,10 @@ namespace DeploymentJobs.DataAccess
                     throw new DeploymentJobNotFoundException(jobId);
                 }
 
-                // job that is running can't be deleted.
-                if (job.Status == DeploymentJobStatus.IN_PROGRESS)
+                // job that is not finished can't be deleted.
+                if (!job.IsCompleted())
                 {
-                    throw new DeployOperationNotAllowedException("Job is in progress. Delete on running jobs is not allowed.");
+                    throw new DeployOperationNotAllowedException("Job is in completed. Delete on non-completed jobs is not allowed.");
                 }
                 _deploymentJobsDictionary.Remove(jobId);
                 return job;

@@ -54,12 +54,12 @@ namespace DeployServiceWebApi.Controllers
         [ValidateModel]
         public IActionResult Post([FromBody] CreateJobModel model)
         {
-            if (!_deploymentSettings.TryGetServiceSettings(model.Project, model.Service, out ServiceSettings settings))
+            if (!_deploymentSettings.TryGetServiceSettings(model.Group, model.Service, out ServiceSettings settings))
             {
-                // error object corresponding to missing project/service.
+                // error object corresponding to missing group/service.
                 var error = new ErrorModel(
-                    "ProjectOrServiceNotFound",
-                    $"Project {model.Project} or service {model.Service} was not found.",
+                    "GroupOrServiceNotFound",
+                    $"Group {model.Group} or service {model.Service} was not found.",
                     HttpStatusCode.NotFound);
 
                 return NotFound(error);
@@ -70,7 +70,7 @@ namespace DeployServiceWebApi.Controllers
                 // error object corresponding to failure adding job to the queue.
                 var error = new ErrorModel(
                     "FailedAddToQueue",
-                    $"Job for the project {settings.Project} and service {settings.Service} is already running",
+                    $"Job for the group {settings.Group} and service {settings.Service} is already running",
                     HttpStatusCode.BadRequest);
 
                 return BadRequest(error);

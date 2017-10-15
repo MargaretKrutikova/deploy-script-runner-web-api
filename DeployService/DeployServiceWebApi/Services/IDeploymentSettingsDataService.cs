@@ -5,6 +5,6 @@ namespace DeployServiceWebApi.Services
     public interface IDeploymentSettingsDataService
     {
        void ReloadDeploymentSettingsAndJobQueues();
-       ProjectModel[] GetProjectsModel();
+       GroupModel[] GetGroupsModel();
     }
 }

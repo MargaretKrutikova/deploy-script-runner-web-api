@@ -2,7 +2,7 @@ using System;
 
 namespace DeployServiceWebApi.Models
 {
-    public class ProjectModel
+    public class GroupModel
     {
         public string Name { get; set; }
         public ServiceModel[] Services { get; set; }

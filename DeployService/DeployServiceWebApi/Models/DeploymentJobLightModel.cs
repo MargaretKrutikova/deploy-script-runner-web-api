@@ -7,20 +7,20 @@ namespace DeployServiceWebApi.Models
     public class DeploymentJobLightModel
     {
         public string Id { get; }
-        public string Project { get; }
+        public string Group { get; }
         public string Service { get; }
         public string Status { get; }
         public string EndTime { get; }
 
         public DeploymentJobLightModel(
             string id,
-            string project,
+            string group,
             string service,
             string status,
                 DateTime? endTime = null)
         {
             Id = id;
-            Project = project;
+            Group = group;
             Service = service;
             Status = status;
             EndTime = endTime.ToPresentationFormat();
@@ -29,7 +29,7 @@ namespace DeployServiceWebApi.Models
         public DeploymentJobLightModel(DeploymentJob job)
         {
             Id = job.Id;
-            Project = job.Project;
+            Group = job.Group;
             Service = job.Service;
             Status = job.Status.ToString();
             EndTime = job.EndTime.ToPresentationFormat();

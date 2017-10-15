@@ -34,13 +34,13 @@ namespace DeployServiceWebApi.Services
 
         public bool TryAddJobToQueue(ServiceSettings settings, out DeploymentJob job)
         {
-            var createdJob = _jobsDataAccess.CreateJob(settings.Project, settings.Service);
+            var createdJob = _jobsDataAccess.CreateJob(settings.Group, settings.Service);
 
             TaskCreator taskCreator = async () => await RunJob(createdJob.Id, settings.Scripts);
-            if (!_queues.TryAddToQueue(settings.Project, taskCreator)) 
+            if (!_queues.TryAddToQueue(settings.Group, taskCreator)) 
             {
                 job = null;
-                _jobsDataAccess.SetFail(createdJob.Id, $"Failed to add job to the queue {settings.Project}");
+                _jobsDataAccess.SetFail(createdJob.Id, $"Failed to add job to the queue {settings.Group}");
                 return false;
             }
 
