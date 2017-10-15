@@ -6,7 +6,7 @@ namespace DeployServiceWebApi.Models
     public class CreateJobModel
     {
         [Required]
-        public string Project { get; set; }
+        public string Group { get; set; }
 
         [Required]
         public string Service { get; set; }

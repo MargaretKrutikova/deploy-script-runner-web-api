@@ -4,8 +4,10 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using DeploymentJobs.DataAccess;
+using DeploymentJobs.DataAccess.Queues;
 using DeploymentSettings.Models;
 using DeployService.Common.Exceptions;
+using DeployService.Common.Extensions;
 using DeployServiceWebApi.Exceptions;
 using DeployServiceWebApi.Options;
 using Microsoft.Extensions.Logging;
@@ -14,79 +16,56 @@ using Serilog.Events;
 
 namespace DeployServiceWebApi.Services
 {
-    public interface IDeploymentService
-    {
-        bool TryRunJobIfNotInProgress(
-            string project,
-            string service,
-            List<DeploymentScript> scripts,
-            out DeploymentJob job);
-
-        void CancelJob(string jobId);
-    }
-
     public class DeploymentService : IDeploymentService
     {
         private readonly ILogger<DeploymentService> _logger;
         private readonly IDeploymentJobDataAccess _jobsDataAccess;
+        private readonly IDeploymentJobQueues _queues;
 
         public DeploymentService(
             ILogger<DeploymentService> logger,
-            IDeploymentJobDataAccess jobsDataAccess)
+            IDeploymentJobDataAccess jobsDataAccess,
+            IDeploymentJobQueues queues)
         {
             _logger = logger;
             _jobsDataAccess = jobsDataAccess;
+            _queues = queues;
         }
 
-        public void CancelJob(string jobId)
+        public bool TryAddJobToQueue(ServiceSettings settings, out DeploymentJob job)
         {
-            try
-            {
-                _jobsDataAccess.CancelJob(jobId);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Failed to cancel job with id ${jobId}.", ex);
-                throw;
-            }
-        }
+            var createdJob = _jobsDataAccess.CreateJob(settings.Group, settings.Service);
 
-        public bool TryRunJobIfNotInProgress(
-            string project,
-            string service,
-            List<DeploymentScript> scripts,
-            out DeploymentJob job)
-        {
-            if (!_jobsDataAccess.TryCreateIfVacant(project, service, out job))
+            TaskCreator taskCreator = async () => await RunJob(createdJob.Id, settings.Scripts);
+            if (!_queues.TryAddToQueue(settings.Group, taskCreator)) 
             {
+                job = null;
+                _jobsDataAccess.SetFail(createdJob.Id, $"Failed to add job to the queue {settings.Group}");
                 return false;
             }
 
-            var jobId = job.Id;
-            Task.Run(() => RunJob(jobId, scripts));
-
+            job = createdJob;
             return true;
         }
 
-        private void RunJob(string jobId, List<DeploymentScript> scripts)
+        private async Task RunJob(string jobId, IEnumerable<DeploymentScript> scripts)
         {
             try
             {
                 foreach (var script in scripts)
                 {
-                    if (!File.Exists(script.Path))
-                    {
-                        throw new DeploymentException($"File cannot be found: {script.Path}");
-                    };
-
                     // check if the job hasn't been cancelled and exit if it has.
                     if (_jobsDataAccess.CheckJobStatus(jobId, DeploymentJobStatus.CANCELLED))
                     {
                         _logger.LogInformation($"Job with id ${jobId} has been cancelled. Exiting deployment.");
                         return;
                     }
+                    if (!File.Exists(script.Path))
+                    {
+                        throw new DeploymentException($"File cannot be found: {script.Path}");
+                    };
 
-                    ExecuteScript(script, jobId);
+                    await ExecuteScript(script, jobId);
                 }
 
                 _jobsDataAccess.SetSuccess(jobId);
@@ -96,15 +75,14 @@ namespace DeployServiceWebApi.Services
                 var errorMessage = $"Error running deployables: {ex.Message}";
                 _logger.LogError(errorMessage, ex);
 
+                if (_jobsDataAccess.CheckJobStatus(jobId, DeploymentJobStatus.FAIL)) return;
+                
                 // set fail if haven't already been set while running deployment scripts.
-                if (!_jobsDataAccess.CheckJobStatus(jobId, DeploymentJobStatus.FAIL))
-                {
-                    _jobsDataAccess.SetFail(jobId, ex.Message);
-                }
+                _jobsDataAccess.SetFail(jobId, ex.Message);
             }
         }
         
-        private void ExecuteScript(DeploymentScript script, string jobId)
+        private async Task ExecuteScript(DeploymentScript script, string jobId)
         {
             var proc = new Process
             {
@@ -118,10 +96,10 @@ namespace DeployServiceWebApi.Services
             };
             _logger.LogInformation($"Starting script {Path.GetFileName(script.Path)}");
 
-            proc.Start();
+             proc.Start();
 
             _jobsDataAccess.SetInProgress(jobId, $"Running script {Path.GetFileName(script.Path)}", proc);
-
+            
             // read output and error streams async
             proc.OutputDataReceived += (sender, eventArgs) => LogIfNotEmpty(jobId, eventArgs.Data);
             proc.ErrorDataReceived += (sender, eventArgs) => LogIfNotEmpty(jobId, eventArgs.Data, LogEventLevel.Error);
@@ -129,7 +107,7 @@ namespace DeployServiceWebApi.Services
             proc.BeginOutputReadLine();
             proc.BeginErrorReadLine();
 
-            proc.WaitForExit();
+            await proc.WaitForExitAsync();
 
             // check if the job has failed during deployment.
             if (proc.ExitCode != 0 || _jobsDataAccess.CheckJobStatus(jobId, DeploymentJobStatus.FAIL))

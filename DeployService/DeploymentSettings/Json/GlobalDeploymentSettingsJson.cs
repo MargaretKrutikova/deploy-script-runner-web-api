@@ -5,10 +5,10 @@ namespace DeploymentSettings.Json
 {
     public class GlobalDeploymentSettingsJson
     {
-        public Dictionary<string, ProjectDeploymentSettingsJson> Projects { get; set; }
+        public Dictionary<string, GroupDeploymentSettingsJson> Groups { get; set; }
     }
 
-    public class ProjectDeploymentSettingsJson
+    public class GroupDeploymentSettingsJson
     {
         public string ServiceScriptsRootPath { get; set; }
         public DeploymentScriptJson[] Scripts { get; set; }

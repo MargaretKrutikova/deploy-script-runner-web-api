@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using DeploymentJobs.DataAccess.Queues;
 using DeploymentSettings;
 using DeploymentSettings.Json;
 using DeployService.Common.Exceptions;
@@ -13,29 +14,26 @@ using Newtonsoft.Json.Serialization;
 
 namespace DeployServiceWebApi.Services
 {
-    public interface IDeploymentSettingsDataService
-    {
-       void ReloadDeploymentSettingsFromFile();
-       ProjectModel[] GetProjectsModel();
-    }
-
     public class DeploymentSettingsDataService : IDeploymentSettingsDataService
     {
         private readonly ILogger<DeploymentSettingsDataService> _logger;
         private readonly IDeploymentSettingsDataStore _deploymentSettingsDataStore;
+        private readonly IDeploymentJobQueues _jobQueues;
         private readonly string _deploySettingsPath;
 
         public DeploymentSettingsDataService(
             ILogger<DeploymentSettingsDataService> logger,
             IOptions<ConfigurationOptions> configOptions,
+            IDeploymentJobQueues jobQueues,
             IDeploymentSettingsDataStore deploymentSettingsDataStore)
         {
             _logger = logger;
             _deploySettingsPath = configOptions.Value.DeploySettingsPath;
             _deploymentSettingsDataStore = deploymentSettingsDataStore;
+            _jobQueues = jobQueues;
         }
 
-        public void ReloadDeploymentSettingsFromFile()
+        public void ReloadDeploymentSettingsAndJobQueues()
         {
             try 
             {
@@ -49,8 +47,10 @@ namespace DeployServiceWebApi.Services
                 var settingsJson = JsonConvert.DeserializeObject<GlobalDeploymentSettingsJson>(settingsString, jsonSerializerSettings);
 
                 _deploymentSettingsDataStore.SetGlobalDeploymentSettings(settingsJson);
+
+                _jobQueues.InitializeAndRunJobQueues(settingsJson.Groups.Keys);
             }
-            catch(Exception exception) 
+            catch (Exception exception) 
             {
                 var errorMessage = "Failed to reload deployment settings from file.";
                 
@@ -59,10 +59,10 @@ namespace DeployServiceWebApi.Services
             }
         }
 
-        public ProjectModel[] GetProjectsModel()
+        public GroupModel[] GetGroupsModel()
         {
-            var projects = _deploymentSettingsDataStore.GetProjects().Select(p =>
-                new ProjectModel
+            var groups = _deploymentSettingsDataStore.GetGroups().Select(p =>
+                new GroupModel
                 {
                     Name = p.Key,
                     Services = p.Value.Services.Select(s => new ServiceModel
@@ -72,7 +72,7 @@ namespace DeployServiceWebApi.Services
                     }).ToArray()
                 }).ToArray();
 
-            return projects;
+            return groups;
         }
     }
 }

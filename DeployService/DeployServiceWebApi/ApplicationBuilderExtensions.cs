@@ -23,7 +23,7 @@ namespace DeployServiceWebApi
         public static void UseDeploymentSettingsDataInitializer(this IApplicationBuilder app)
         {
             var dataStoreService = app.ApplicationServices.GetRequiredService<IDeploymentSettingsDataService>();
-            dataStoreService.ReloadDeploymentSettingsFromFile();
+            dataStoreService.ReloadDeploymentSettingsAndJobQueues();
         }
 
         public static IApplicationBuilder UseExceptionHandlingMiddleware(

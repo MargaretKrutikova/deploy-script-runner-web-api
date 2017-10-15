@@ -7,7 +7,7 @@ namespace DeployServiceWebApi.Models
     public class DeploymentJobModel
     {
         public string Id { get; }
-        public string Project { get; }
+        public string Group { get; }
         public string Service { get; }
         public string Status { get; }
         public string CurrentAction { get; }
@@ -17,7 +17,7 @@ namespace DeployServiceWebApi.Models
 
         public DeploymentJobModel(
             string id,
-            string project,
+            string group,
             string service,
             string status,
             string currentAction,
@@ -26,7 +26,7 @@ namespace DeployServiceWebApi.Models
             DateTime? endTime = null)
         {
             Id = id;
-            Project = project;
+            Group = group;
             Service = service;
             Status = status;
             CurrentAction = currentAction;
@@ -38,7 +38,7 @@ namespace DeployServiceWebApi.Models
         public DeploymentJobModel(DeploymentJob job)
         {
             Id = job.Id;
-            Project = job.Project;
+            Group = job.Group;
             Service = job.Service;
             Status = job.Status.ToString();
             CurrentAction = job.CurrentAction;

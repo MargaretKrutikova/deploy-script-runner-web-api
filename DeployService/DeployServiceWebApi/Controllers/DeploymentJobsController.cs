@@ -52,33 +52,25 @@ namespace DeployServiceWebApi.Controllers
         [HttpPost]
         [Authorize]
         [ValidateModel]
-        public IActionResult Post([FromBody] CreateJobModel jobModel)
+        public IActionResult Post([FromBody] CreateJobModel model)
         {
-            if (!_deploymentSettings.TryGetDeployScripts(
-                jobModel.Project,
-                jobModel.Service,
-                out List<DeploymentScript> scripts))
+            if (!_deploymentSettings.TryGetServiceSettings(model.Group, model.Service, out ServiceSettings settings))
             {
-                // error object corresponding to missing project/service.
+                // error object corresponding to missing group/service.
                 var error = new ErrorModel(
-                    "ProjectOrServiceNotFound",
-                    $"Project {jobModel.Project} or service {jobModel.Service} was not found.",
+                    "GroupOrServiceNotFound",
+                    $"Group {model.Group} or service {model.Service} was not found.",
                     HttpStatusCode.NotFound);
 
                 return NotFound(error);
             }
 
-            if (!_deploymentService.TryRunJobIfNotInProgress(
-                jobModel.Project,
-                jobModel.Service,
-                scripts,
-                out DeploymentJob job))
+            if (!_deploymentService.TryAddJobToQueue(settings, out DeploymentJob job))
             {
-                // error object corresponding to job already running.
-                // TODO: probably return currently running job?
+                // error object corresponding to failure adding job to the queue.
                 var error = new ErrorModel(
-                    "JobAlreadyInProgress",
-                    $"Job for the project {jobModel.Project} and service {jobModel.Service} is already running",
+                    "FailedAddToQueue",
+                    $"Job for the group {settings.Group} and service {settings.Service} is already running",
                     HttpStatusCode.BadRequest);
 
                 return BadRequest(error);
@@ -104,7 +96,7 @@ namespace DeployServiceWebApi.Controllers
                 return BadRequest(error);
             }
 
-            _deploymentService.CancelJob(id);
+            _jobsDataAccess.CancelJob(id);
             return Ok();
         }
 

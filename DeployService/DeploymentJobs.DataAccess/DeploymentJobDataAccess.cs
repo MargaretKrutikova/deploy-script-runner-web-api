@@ -23,25 +23,14 @@ namespace DeploymentJobs.DataAccess
             return _deploymentJobsDictionary.Values;
         }
 
-        public bool TryCreateIfVacant(string project, string service, out DeploymentJob newJob)
+        public DeploymentJob CreateJob(string group, string service)
         {
             lock (_lockObject)
             {
-                var jobInProgress = _deploymentJobsDictionary.Values.FirstOrDefault(
-                    j => j.Project == project &&
-                         j.Service == service &&
-                         !j.IsCompleted());
-
-                if (jobInProgress != null) 
-                {
-                    newJob = null;
-                    return false;
-                }
-
-                newJob = new DeploymentJob(GenerateUid(), project, service);
+                var newJob = new DeploymentJob(GenerateUid(), group, service);
                 _deploymentJobsDictionary.Add(newJob.Id, newJob);
 
-                return true;
+                return newJob;
             }
         }
 
@@ -153,13 +142,21 @@ namespace DeploymentJobs.DataAccess
                     throw new DeploymentJobNotFoundException(jobId);
                 }
 
-                // job that is running can't be deleted.
-                if (job.Status == DeploymentJobStatus.IN_PROGRESS)
+                // job that is not finished can't be deleted.
+                if (!job.IsCompleted())
                 {
-                    throw new DeployOperationNotAllowedException("Job is in progress. Delete on running jobs is not allowed.");
+                    throw new DeployOperationNotAllowedException("Job is in completed. Delete on non-completed jobs is not allowed.");
                 }
                 _deploymentJobsDictionary.Remove(jobId);
                 return job;
+            }
+        }
+
+        public bool HasUnfinishedJobs()
+        {
+            lock (_lockObject)
+            {
+                return _deploymentJobsDictionary.Any(kvp => !kvp.Value.IsCompleted());
             }
         }
 
@@ -167,9 +164,7 @@ namespace DeploymentJobs.DataAccess
         {
             lock (_lockObject)
             {
-                var keysToDelete = _deploymentJobsDictionary.Where(kvp =>
-                        kvp.Value.Status != DeploymentJobStatus.IN_PROGRESS ||
-                        kvp.Value.Status != DeploymentJobStatus.NOT_STARTED).Select(kvp => kvp.Key).ToArray();
+                var keysToDelete = _deploymentJobsDictionary.Where(kvp => kvp.Value.IsCompleted()).Select(kvp => kvp.Key).ToArray();
 
                 foreach (var keyToDelete in keysToDelete)
                 {

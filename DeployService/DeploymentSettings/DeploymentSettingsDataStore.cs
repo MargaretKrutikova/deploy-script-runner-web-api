@@ -18,20 +18,20 @@ namespace DeploymentSettings
         {
             lock (_lockObject) 
             {
-                var projectSettingsDictionary = settingsJson.Projects.ToDictionary(project => project.Key, project =>
-                    new ProjectDeploymentSettings(
-                        ConvertJsonDeploymentScripts(project.Value.Scripts), // project scripts
+                var groupSettingsDictionary = settingsJson.Groups.ToDictionary(group => group.Key, group =>
+                    new GroupDeploymentSettings(
+                        ConvertJsonDeploymentScripts(group.Value.Scripts), // group scripts
 
-                        project.Value.Services.ToDictionary(service => service.Key, service => 
+                        group.Value.Services.ToDictionary(service => service.Key, service => 
                             new ServiceDeploymentSettings(
                                 service.Value.DisplayText, 
-                                ConvertJsonDeploymentScripts(service.Value.Scripts, project.Value.ServiceScriptsRootPath ?? "") // service scripts
+                                ConvertJsonDeploymentScripts(service.Value.Scripts, group.Value.ServiceScriptsRootPath ?? "") // service scripts
                             )),
 
-                        project.Value.ServiceScriptsRootPath
+                        group.Value.ServiceScriptsRootPath
                     ));
 
-                _deploymentSettings = new GlobalDeploymentSettings(projectSettingsDictionary);
+                _deploymentSettings = new GlobalDeploymentSettings(groupSettingsDictionary);
             }
         }
 
@@ -43,36 +43,33 @@ namespace DeploymentSettings
                 .ToList();
         }
 
-        public bool TryGetDeployScripts(
-            string project,
+        public bool TryGetServiceSettings(
+            string group,
             string service,
-            out List<DeploymentScript> scripts)
+            out ServiceSettings settings)
         {
             lock (_lockObject) 
             {
-                if (!_deploymentSettings.Projects.TryGetValue(project, out ProjectDeploymentSettings projectSettings) ||
-                    !projectSettings.Services.TryGetValue(service, out ServiceDeploymentSettings serviceSettings))
+                if (!_deploymentSettings.Groups.TryGetValue(group, out GroupDeploymentSettings groupSettings) ||
+                    !groupSettings.Services.TryGetValue(service, out ServiceDeploymentSettings serviceSettings))
                 {
-                    scripts = null;
+                    settings = null;
                     return false;
                 }
 
-                scripts = new List<DeploymentScript>();
-
-                if (projectSettings.Scripts != null)
-                {
-                    scripts.AddRange(projectSettings.Scripts);
-                }
+                var scripts = groupSettings.Scripts?.ToList() ?? new List<DeploymentScript>();
                 scripts.AddRange(serviceSettings.Scripts);
+
+                settings = new ServiceSettings(group, service, scripts);
                 return true;
             }
         }
 
-        public ReadOnlyDictionary<string, ProjectDeploymentSettings> GetProjects()
+        public ReadOnlyDictionary<string, GroupDeploymentSettings> GetGroups()
         {
             lock (_lockObject) 
             {
-                return _deploymentSettings.Projects;
+                return _deploymentSettings.Groups;
             }
         }
     }

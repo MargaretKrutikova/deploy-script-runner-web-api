@@ -1,5 +1,5 @@
 {
-  "projects" : {
+  "groups" : {
     "example-project-deployment": {
       "scripts": [{
         "path": "..\\tools\\checkout_svn.bat",

@@ -5,16 +5,16 @@ namespace DeploymentSettings.Models
 {
     public class GlobalDeploymentSettings
     {
-        public GlobalDeploymentSettings(Dictionary<string, ProjectDeploymentSettings> projects)
+        public GlobalDeploymentSettings(Dictionary<string, GroupDeploymentSettings> groups)
         {
-            Projects = new ReadOnlyDictionary<string, ProjectDeploymentSettings>(projects);
+            Groups = new ReadOnlyDictionary<string, GroupDeploymentSettings>(groups);
         }
-        public ReadOnlyDictionary<string, ProjectDeploymentSettings> Projects { get; }
+        public ReadOnlyDictionary<string, GroupDeploymentSettings> Groups { get; }
     }
 
-    public class ProjectDeploymentSettings
+    public class GroupDeploymentSettings
     {
-        public ProjectDeploymentSettings(
+        public GroupDeploymentSettings(
             List<DeploymentScript> scripts,
             Dictionary<string, ServiceDeploymentSettings> services,
             string serviceScriptsRootPath = "")
